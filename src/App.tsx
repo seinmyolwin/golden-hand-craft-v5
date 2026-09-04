@@ -12,6 +12,10 @@ import {
   SoftDeletedItem,
   AppLockSettings,
   TabType,
+  ActiveTab,
+  StockAdjustmentRecord,
+  BackupReminderSettings,
+  AutoRecoverySnapshot,
   OrderStatus,
 } from './types';
 import {
@@ -37,6 +41,12 @@ import {
   saveDeletedItems,
   loadAppLockSettings,
   saveAppLockSettings,
+  getStoredStockAdjustments,
+  saveStoredStockAdjustments,
+  getStoredBackupReminderSettings,
+  saveStoredBackupReminderSettings,
+  getStoredRecoverySnapshots,
+  createAutoRecoverySnapshot,
   getTodayDateString,
   getCurrentTimeString,
 } from './utils/storage';
@@ -54,6 +64,7 @@ import { MerchantsTab } from './components/MerchantsTab';
 import { ProductsTab } from './components/ProductsTab';
 import { UnifiedHistoryTab } from './components/UnifiedHistoryTab';
 import { ReportsTab } from './components/ReportsTab';
+import { SettingsBackupTab } from './components/SettingsBackupTab';
 
 // Security & Lock Screen
 import { AppLockScreen } from './components/AppLockScreen';
@@ -78,7 +89,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 
 export default function App() {
   // Main Navigation & Date State
-  const [activeTab, setActiveTab] = useState<TabType>('PICKUP');
+  const [activeTab, setActiveTab] = useState<TabType>('daily');
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
 
   // Core Data States
@@ -89,6 +100,9 @@ export default function App() {
   const [sales, setSales] = useState<SaleRecord[]>(() => loadSales());
   const [orders, setOrders] = useState<MerchantOrder[]>(() => loadOrders());
   const [peerTrades, setPeerTrades] = useState<PeerTradeRecord[]>(() => loadPeerTrades());
+  const [stockAdjustments, setStockAdjustments] = useState<StockAdjustmentRecord[]>(() => getStoredStockAdjustments());
+  const [backupReminderSettings, setBackupReminderSettings] = useState<BackupReminderSettings>(() => getStoredBackupReminderSettings());
+  const [snapshots, setSnapshots] = useState<AutoRecoverySnapshot[]>(() => getStoredRecoverySnapshots());
   const [shopSettings, setShopSettings] = useState<ShopSettings>(() => loadShopSettings());
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(() => loadAuditLogs());
   const [deletedItems, setDeletedItems] = useState<SoftDeletedItem[]>(() => loadDeletedItems());
@@ -150,6 +164,8 @@ export default function App() {
   useEffect(() => { saveSales(sales); }, [sales]);
   useEffect(() => { saveOrders(orders); }, [orders]);
   useEffect(() => { savePeerTrades(peerTrades); }, [peerTrades]);
+  useEffect(() => { saveStoredStockAdjustments(stockAdjustments); }, [stockAdjustments]);
+  useEffect(() => { saveStoredBackupReminderSettings(backupReminderSettings); }, [backupReminderSettings]);
   useEffect(() => { saveShopSettings(shopSettings); }, [shopSettings]);
   useEffect(() => { saveAuditLogs(auditLogs); }, [auditLogs]);
   useEffect(() => { saveDeletedItems(deletedItems); }, [deletedItems]);
@@ -549,6 +565,77 @@ export default function App() {
     setIsNewSaleModalOpen(true);
   }, []);
 
+  // Stock Adjustment Handler
+  const handleAddStockAdjustment = useCallback((adj: StockAdjustmentRecord) => {
+    setStockAdjustments((prev) => [adj, ...prev]);
+    logAction(
+      'လက်ကျန်ပစ္စည်း ချိန်ညှိခြင်း',
+      `${adj.productName} (${adj.quantity > 0 ? '+' : ''}${adj.quantity}) - ${adj.reason}`,
+      'INVENTORY',
+      adj.id
+    );
+  }, [logAction]);
+
+  // Full Restore Data for Backup Tab
+  const handleRestoreData = useCallback(
+    (
+      newProducts: Product[],
+      newSuppliers: Supplier[],
+      newTransactions: TransactionRecord[],
+      newMerchants?: Merchant[],
+      newSales?: SaleRecord[],
+      newAdjustments?: StockAdjustmentRecord[],
+      newShopSettings?: ShopSettings
+    ) => {
+      if (newProducts) setProducts(newProducts);
+      if (newSuppliers) setSuppliers(newSuppliers);
+      if (newTransactions) setTransactions(newTransactions);
+      if (newMerchants) setMerchants(newMerchants);
+      if (newSales) setSales(newSales);
+      if (newAdjustments) setStockAdjustments(newAdjustments);
+      if (newShopSettings) setShopSettings(newShopSettings);
+      logAction('အချက်အလက်များ အားလုံး အစားထိုး ပြန်လည်ရယူခြင်း', 'Full data restored', 'SYSTEM');
+    },
+    [logAction]
+  );
+
+  // Snapshot Restore & Take Now Handlers
+  const handleRestoreSnapshot = useCallback(
+    (snap: AutoRecoverySnapshot) => {
+      if (snap.data) {
+        if (snap.data.products) setProducts(snap.data.products);
+        if (snap.data.suppliers) setSuppliers(snap.data.suppliers);
+        if (snap.data.transactions) setTransactions(snap.data.transactions);
+        if (snap.data.merchants) setMerchants(snap.data.merchants);
+        if (snap.data.sales) setSales(snap.data.sales);
+        if (snap.data.merchantOrders) setOrders(snap.data.merchantOrders);
+        if (snap.data.shopSettings) setShopSettings(snap.data.shopSettings);
+        if (snap.data.stockAdjustments) setStockAdjustments(snap.data.stockAdjustments);
+        logAction('Snapshot မှ ပြန်လည်ရယူခြင်း', snap.reason || snap.id, 'SYSTEM');
+        alert('Snapshot မှ စာရင်းများ အောင်မြင်စွာ ပြန်လည်ရယူပြီးပါပြီ');
+      }
+    },
+    [logAction]
+  );
+
+  const handleTakeSnapshotNow = useCallback(
+    (reason: string) => {
+      const snap = createAutoRecoverySnapshot(reason, {
+        products,
+        suppliers,
+        merchants,
+        transactions,
+        sales,
+        stockAdjustments,
+        merchantOrders: orders,
+        shopSettings,
+      });
+      setSnapshots(getStoredRecoverySnapshots());
+      logAction('အလိုအလျောက် Snapshot အသစ် ရယူခြင်း', reason, 'SYSTEM', snap.id);
+    },
+    [products, suppliers, transactions, merchants, sales, orders, shopSettings, stockAdjustments, logAction]
+  );
+
   // Compute Inventory Stock for NewSaleModal
   const inventoryStock = useMemo(() => {
     return products.map((prod) => {
@@ -577,6 +664,58 @@ export default function App() {
     });
   }, [products, transactions, sales]);
 
+  // Tab Badge & Navigation Counts
+  const todayInboundCount = useMemo(() => {
+    return transactions.filter((t) => t.date === selectedDate).length;
+  }, [transactions, selectedDate]);
+
+  const todaySalesCount = useMemo(() => {
+    return sales.filter((s) => s.date === selectedDate).length;
+  }, [sales, selectedDate]);
+
+  const lowStockAlertCount = useMemo(() => {
+    return inventoryStock.filter((i) => i.currentStock <= (i.product.minStockAlert || 5)).length;
+  }, [inventoryStock]);
+
+  const pendingOrdersCount = useMemo(() => {
+    return orders.filter((o) => o.status === 'PENDING').length;
+  }, [orders]);
+
+  const pendingOrdersList = useMemo(() => {
+    return orders.filter((o) => o.status === 'PENDING');
+  }, [orders]);
+
+  // Normalize activeTab to ActiveTab so both lowercase and legacy uppercase keys function seamlessly
+  const normalizedTab: ActiveTab = useMemo(() => {
+    switch (activeTab) {
+      case 'PICKUP':
+        return 'daily';
+      case 'MERCHANT_SALES':
+        return 'sales';
+      case 'ORDERS':
+        return 'orders';
+      case 'PEER_TRADING':
+        return 'peers';
+      case 'INVENTORY':
+        return 'inventory';
+      case 'SUPPLIERS':
+        return 'suppliers';
+      case 'MERCHANTS':
+        return 'merchants';
+      case 'PRODUCTS':
+        return 'products';
+      case 'HISTORY':
+        return 'history';
+      case 'REPORTS':
+        return 'reports';
+      case 'BACKUP':
+      case 'SETTINGS':
+        return 'backup';
+      default:
+        return (activeTab as ActiveTab) || 'daily';
+    }
+  }, [activeTab]);
+
   // App Lock Screen Guard
   if (appLockSettings.enabled && !isUnlocked) {
     return (
@@ -601,8 +740,12 @@ export default function App() {
           onDateChange={setSelectedDate}
           onOpenNewEntry={() => handleOpenNewEntry()}
           onOpenNewSale={() => handleOpenNewSale()}
+          todayInboundCount={todayInboundCount}
+          todaySalesCount={todaySalesCount}
+          pendingOrdersCount={pendingOrdersCount}
+          onNavigateToOrders={() => setActiveTab('orders')}
           onOpenEditProfile={() => setIsShopProfileModalOpen(true)}
-          onOpenBackup={() => setIsBackupModalOpen(true)}
+          onOpenBackup={() => setActiveTab('backup')}
           onOpenAuditLogs={() => setIsDeletedHistoryModalOpen(true)}
           onOpenClearData={() => setIsClearDataModalOpen(true)}
           onOpenLocalSync={() => setIsLocalSyncModalOpen(true)}
@@ -612,32 +755,43 @@ export default function App() {
           onLockApp={handleLockApp}
         />
 
-        {/* Main Content Area */}
-        <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 md:p-6">
-          {activeTab === 'PICKUP' && (
+        {/* Main Content Area - Dynamic Tab Routing */}
+        <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 md:p-6 pb-24">
+          {normalizedTab === 'daily' && (
             <DailyPickupTab
               selectedDate={selectedDate}
               suppliers={suppliers}
               products={products}
               transactions={transactions}
-              onOpenNewEntry={handleOpenNewEntry}
+              onOpenNewEntry={() => handleOpenNewEntry()}
+              onOpenNewEntryWithSupplier={(supId) => handleOpenNewEntry(supId)}
               onViewVoucher={handleViewInboundVoucher}
-              onViewLedger={handleViewSupplierLedger}
+              onDeleteTransaction={handleDeleteTransaction}
+              pendingOrders={pendingOrdersList}
+              onNavigateToOrders={() => setActiveTab('orders')}
+              onOpenOrderNotificationModal={(order) => {
+                setNotificationOrder(order);
+                setIsNotificationOpen(true);
+              }}
             />
           )}
 
-          {activeTab === 'MERCHANT_SALES' && (
-            <MerchantSalesTab
-              selectedDate={selectedDate}
-              merchants={merchants}
+          {normalizedTab === 'inventory' && (
+            <InventoryTab
               products={products}
+              transactions={transactions}
               sales={sales}
-              onOpenNewSale={handleOpenNewSale}
-              onViewSaleVoucher={handleViewSaleVoucher}
+              stockAdjustments={stockAdjustments}
+              onUpdateProduct={handleUpdateProduct}
+              onAddProduct={handleAddProduct}
+              onAddStockAdjustment={handleAddStockAdjustment}
+              onSaveAdjustment={handleAddStockAdjustment}
+              onOpenNewSale={() => handleOpenNewSale()}
+              onOpenNewSupplierCollection={() => handleOpenNewEntry()}
             />
           )}
 
-          {activeTab === 'ORDERS' && (
+          {normalizedTab === 'orders' && (
             <MerchantOrdersTab
               orders={orders}
               merchants={merchants}
@@ -649,7 +803,20 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'PEER_TRADING' && (
+          {normalizedTab === 'sales' && (
+            <MerchantSalesTab
+              sales={sales}
+              merchants={merchants}
+              products={products}
+              selectedDate={selectedDate}
+              inventoryStock={inventoryStock}
+              onOpenNewSale={() => handleOpenNewSale()}
+              onViewSaleVoucher={handleViewSaleVoucher}
+              onDeleteSale={handleDeleteSale}
+            />
+          )}
+
+          {normalizedTab === 'peers' && (
             <PeerTradingTab
               peerTrades={peerTrades}
               products={products}
@@ -658,39 +825,35 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'INVENTORY' && (
-            <InventoryTab
-              products={products}
-              transactions={transactions}
-              sales={sales}
-              onUpdateProduct={handleUpdateProduct}
-            />
-          )}
-
-          {activeTab === 'SUPPLIERS' && (
-            <SuppliersTab
-              suppliers={suppliers}
-              transactions={transactions}
-              onAddSupplier={handleAddSupplier}
-              onUpdateSupplier={handleUpdateSupplier}
-              onDeleteSupplier={handleDeleteSupplier}
-              onOpenNewEntry={handleOpenNewEntry}
-              onViewLedger={handleViewSupplierLedger}
-            />
-          )}
-
-          {activeTab === 'MERCHANTS' && (
+          {normalizedTab === 'merchants' && (
             <MerchantsTab
               merchants={merchants}
               sales={sales}
               onAddMerchant={handleAddMerchant}
               onUpdateMerchant={handleUpdateMerchant}
               onDeleteMerchant={handleDeleteMerchant}
-              onOpenNewSale={handleOpenNewSale}
+              onOpenNewSaleForMerchant={(mId) => handleOpenNewSale(mId)}
+              onViewMerchantHistory={() => {}}
+              onOpenDeletedHistory={() => setIsDeletedHistoryModalOpen(true)}
+              deletedRecordsCount={deletedItems.filter((d) => d.type === 'MERCHANT').length}
             />
           )}
 
-          {activeTab === 'PRODUCTS' && (
+          {normalizedTab === 'suppliers' && (
+            <SuppliersTab
+              suppliers={suppliers}
+              transactions={transactions}
+              onAddSupplier={handleAddSupplier}
+              onUpdateSupplier={handleUpdateSupplier}
+              onDeleteSupplier={handleDeleteSupplier}
+              onOpenNewEntryWithSupplier={(supId) => handleOpenNewEntry(supId)}
+              onViewSupplierLedger={handleViewSupplierLedger}
+              onOpenDeletedHistory={() => setIsDeletedHistoryModalOpen(true)}
+              deletedRecordsCount={deletedItems.filter((d) => d.type === 'SUPPLIER').length}
+            />
+          )}
+
+          {normalizedTab === 'products' && (
             <ProductsTab
               products={products}
               onAddProduct={handleAddProduct}
@@ -699,7 +862,7 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'HISTORY' && (
+          {normalizedTab === 'history' && (
             <UnifiedHistoryTab
               transactions={transactions}
               sales={sales}
@@ -710,7 +873,7 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'REPORTS' && (
+          {normalizedTab === 'reports' && (
             <ReportsTab
               suppliers={suppliers}
               products={products}
@@ -719,13 +882,44 @@ export default function App() {
               merchants={merchants}
             />
           )}
+
+          {normalizedTab === 'backup' && (
+            <SettingsBackupTab
+              products={products}
+              suppliers={suppliers}
+              transactions={transactions}
+              merchants={merchants}
+              sales={sales}
+              stockAdjustments={stockAdjustments}
+              shopSettings={shopSettings}
+              deletedRecordsCount={deletedItems.length}
+              backupReminderSettings={backupReminderSettings}
+              onUpdateBackupReminderSettings={setBackupReminderSettings}
+              onOpenBackupReminderModal={() => setIsBackupReminderOpen(true)}
+              onOpenEditShopProfile={() => setIsShopProfileModalOpen(true)}
+              onOpenBackupSaveModal={() => setIsBackupModalOpen(true)}
+              onOpenDeletedHistory={() => setIsDeletedHistoryModalOpen(true)}
+              onOpenClearDataModal={() => setIsClearDataModalOpen(true)}
+              appLockSettings={appLockSettings}
+              onUpdateAppLockSettings={handleUpdateAppLock}
+              snapshots={snapshots}
+              onRestoreSnapshot={handleRestoreSnapshot}
+              onTakeSnapshotNow={handleTakeSnapshotNow}
+              onOpenSyncModal={() => setIsLocalSyncModalOpen(true)}
+              onOpenZapyaModal={() => setIsZapyaModalOpen(true)}
+              onRestoreData={handleRestoreData}
+            />
+          )}
         </main>
 
         {/* Global Bottom Navigation */}
         <BottomNav
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          pendingOrdersCount={orders.filter((o) => o.status === 'PENDING').length}
+          activeTab={normalizedTab}
+          onTabChange={(tab) => setActiveTab(tab)}
+          todayInboundCount={todayInboundCount}
+          todaySalesCount={todaySalesCount}
+          lowStockAlertCount={lowStockAlertCount}
+          pendingOrdersCount={pendingOrdersCount}
         />
 
         {/* Modals */}
@@ -812,7 +1006,7 @@ export default function App() {
           isOpen={isNotificationOpen}
           onClose={() => setIsNotificationOpen(false)}
           order={notificationOrder}
-          onGoToOrders={() => setActiveTab('ORDERS')}
+          onGoToOrders={() => setActiveTab('orders')}
         />
 
         <ActionVoucherPromptModal
