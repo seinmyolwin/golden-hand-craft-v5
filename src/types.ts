@@ -399,6 +399,8 @@ export interface AuditLogEntry {
   entityId?: string;
 }
 
+export type PeerTradeStatus = 'OPEN' | 'PENDING' | 'REPAID' | 'RETRIEVED' | 'SETTLED' | string;
+
 export interface PeerTradeRecord {
   id: string;
   tradeType: 'BORROW_IN' | 'LEND_OUT';
@@ -406,13 +408,19 @@ export interface PeerTradeRecord {
   time: string;
   peerShopName: string;
   peerLocation: string;
+  merchantId?: string;
+  merchantName?: string;
   productId: string;
   productName: string;
   quantity: number;
   unit: string;
   agreedUnitPrice: number;
   totalTradeValue: number;
-  status: string;
+  status: PeerTradeStatus;
   notes?: string;
+  settledDate?: string;
+  settledTime?: string;
+  settledType?: 'REPAID' | 'RETRIEVED' | 'CASH_SETTLED' | string;
+  settledNotes?: string;
 }
 

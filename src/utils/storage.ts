@@ -15,6 +15,7 @@ import {
   MerchantPurchaseRecord,
   PeerTrader,
   PeerTransaction,
+  PeerTradeRecord,
   SyncPacket,
 } from '../types';
 import {
@@ -772,7 +773,8 @@ export function computeAllProductsStock(
   sales: SaleRecord[] = [],
   adjustments: StockAdjustmentRecord[] = [],
   merchantPurchases: MerchantPurchaseRecord[] = [],
-  peerTransactions: PeerTransaction[] = []
+  peerTransactions: PeerTransaction[] = [],
+  peerTrades: PeerTradeRecord[] = []
 ): ProductStockStats[] {
   const safeProducts = Array.isArray(products) ? products : [];
   const safeTransactions = Array.isArray(transactions) ? transactions : [];
@@ -780,6 +782,10 @@ export function computeAllProductsStock(
   const safeAdjustments = Array.isArray(adjustments) ? adjustments : [];
   const safePurchases = Array.isArray(merchantPurchases) ? merchantPurchases : [];
   const safePeers = Array.isArray(peerTransactions) ? peerTransactions : [];
+  // Use passed peerTrades if given, otherwise fall back to stored trades
+  const safeTrades: PeerTradeRecord[] = Array.isArray(peerTrades) && peerTrades.length > 0
+    ? peerTrades
+    : (safePeers.length === 0 ? loadPeerTrades() : (peerTrades || []));
 
   const inflowMap: { [productId: string]: number } = {};
   const outflowMap: { [productId: string]: number } = {};
@@ -838,6 +844,33 @@ export function computeAllProductsStock(
         outflowMap[item.productId] = (outflowMap[item.productId] || 0) + qty;
       }
     });
+  });
+
+  // Calculate Peer Trades (မိတ်ဖက်/ကုန်သည် ကုန်ဖလှယ်/ချေးငှားမှု)
+  safeTrades.forEach((trade) => {
+    if (!trade || !trade.productId) return;
+    const qty = trade.quantity || 0;
+    const status = (trade.status || 'OPEN').toUpperCase();
+
+    if (trade.tradeType === 'BORROW_IN') {
+      // မိတ်ဖက်ထံမှ ချေးယူခြင်း:
+      // OPEN / PENDING (or CASH_SETTLED where we kept the item): ပစ္စည်းဆိုင်ထဲရောက်ရှိနေသည် (+Inflow)
+      // REPAID / RETURNED ("ပြန်ဆပ်ပြီး"): ပစ္စည်းကို မိတ်ဖက်ထံ ပြန်လည်ပေးဆပ်ပြီးဖြစ်သဖြင့် ဆိုင်ထဲတွင်မရှိတော့ပါ (Net change = 0)
+      if (status === 'REPAID' || status === 'RETURNED') {
+        // Returned back to peer
+      } else {
+        inflowMap[trade.productId] = (inflowMap[trade.productId] || 0) + qty;
+      }
+    } else if (trade.tradeType === 'LEND_OUT') {
+      // မိတ်ဖက်သို့ ထုတ်ငှားခြင်း:
+      // OPEN / PENDING (or CASH_SETTLED where goods were permanently sold/kept): ပစ္စည်းဆိုင်မှ ထွက်ခွာသွားသည် (+Outflow)
+      // RETRIEVED / RETURNED ("ပြန်လည်ရယူပြီး"): ထုတ်ငှားထားသောပစ္စည်းကို ဆိုင်ထဲသို့ ပြန်လည်ရယူသိမ်းဆည်းပြီးဖြစ်သည် (Net change = 0)
+      if (status === 'RETRIEVED' || status === 'RETURNED') {
+        // Returned back to warehouse
+      } else {
+        outflowMap[trade.productId] = (outflowMap[trade.productId] || 0) + qty;
+      }
+    }
   });
 
   const adjustMap: { [productId: string]: number } = {};
