@@ -97,14 +97,70 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
 
   // Core Data States
-  const [suppliers, setSuppliers] = useState<Supplier[]>(() => loadSuppliers());
-  const [merchants, setMerchants] = useState<Merchant[]>(() => loadMerchants());
-  const [products, setProducts] = useState<Product[]>(() => loadProducts());
-  const [transactions, setTransactions] = useState<TransactionRecord[]>(() => loadTransactions());
-  const [sales, setSales] = useState<SaleRecord[]>(() => loadSales());
-  const [orders, setOrders] = useState<MerchantOrder[]>(() => loadOrders());
-  const [peerTrades, setPeerTrades] = useState<PeerTradeRecord[]>(() => loadPeerTrades());
-  const [stockAdjustments, setStockAdjustments] = useState<StockAdjustmentRecord[]>(() => getStoredStockAdjustments());
+  const [suppliers, setSuppliers] = useState<Supplier[]>(() => {
+    const isZeroed = typeof window !== 'undefined' && localStorage.getItem('ledger_zero_settings_activated') === 'true';
+    const loaded = loadSuppliers();
+    if (!isZeroed && (!loaded || loaded.length === 0 || loaded.every((s) => s.totalGoodsValueDelivered === 0 && s.currentAdvanceBalance === 0))) {
+      return getFullDemoData().suppliers;
+    }
+    return loaded;
+  });
+  const [merchants, setMerchants] = useState<Merchant[]>(() => {
+    const isZeroed = typeof window !== 'undefined' && localStorage.getItem('ledger_zero_settings_activated') === 'true';
+    const loaded = loadMerchants();
+    if (!isZeroed && (!loaded || loaded.length === 0 || loaded.every((m) => m.totalPurchasesValue === 0 && m.currentReceivableBalance === 0))) {
+      return getFullDemoData().merchants;
+    }
+    return loaded;
+  });
+  const [products, setProducts] = useState<Product[]>(() => {
+    const isZeroed = typeof window !== 'undefined' && localStorage.getItem('ledger_zero_settings_activated') === 'true';
+    const loaded = loadProducts();
+    if (!isZeroed && (!loaded || loaded.length === 0 || loaded.every((p) => (p.currentStock || 0) === 0))) {
+      return getFullDemoData().products;
+    }
+    return loaded;
+  });
+  const [transactions, setTransactions] = useState<TransactionRecord[]>(() => {
+    const isZeroed = typeof window !== 'undefined' && localStorage.getItem('ledger_zero_settings_activated') === 'true';
+    const loaded = loadTransactions();
+    if (!isZeroed && (!loaded || loaded.length === 0)) {
+      return getFullDemoData().transactions;
+    }
+    return loaded;
+  });
+  const [sales, setSales] = useState<SaleRecord[]>(() => {
+    const isZeroed = typeof window !== 'undefined' && localStorage.getItem('ledger_zero_settings_activated') === 'true';
+    const loaded = loadSales();
+    if (!isZeroed && (!loaded || loaded.length === 0)) {
+      return getFullDemoData().sales;
+    }
+    return loaded;
+  });
+  const [orders, setOrders] = useState<MerchantOrder[]>(() => {
+    const isZeroed = typeof window !== 'undefined' && localStorage.getItem('ledger_zero_settings_activated') === 'true';
+    const loaded = loadOrders();
+    if (!isZeroed && (!loaded || loaded.length === 0)) {
+      return getFullDemoData().orders;
+    }
+    return loaded;
+  });
+  const [peerTrades, setPeerTrades] = useState<PeerTradeRecord[]>(() => {
+    const isZeroed = typeof window !== 'undefined' && localStorage.getItem('ledger_zero_settings_activated') === 'true';
+    const loaded = loadPeerTrades();
+    if (!isZeroed && (!loaded || loaded.length === 0)) {
+      return getFullDemoData().peerTrades;
+    }
+    return loaded;
+  });
+  const [stockAdjustments, setStockAdjustments] = useState<StockAdjustmentRecord[]>(() => {
+    const isZeroed = typeof window !== 'undefined' && localStorage.getItem('ledger_zero_settings_activated') === 'true';
+    const loaded = getStoredStockAdjustments();
+    if (!isZeroed && (!loaded || loaded.length === 0)) {
+      return getFullDemoData().stockAdjustments;
+    }
+    return loaded;
+  });
   const [backupReminderSettings, setBackupReminderSettings] = useState<BackupReminderSettings>(() => getStoredBackupReminderSettings());
   const [snapshots, setSnapshots] = useState<AutoRecoverySnapshot[]>(() => getStoredRecoverySnapshots());
   const [shopSettings, setShopSettings] = useState<ShopSettings>(() => loadShopSettings());
@@ -566,6 +622,7 @@ export default function App() {
 
   // Zero Settings (Real Shop Launch)
   const handleConfirmZeroReset = useCallback(() => {
+    localStorage.setItem('ledger_zero_settings_activated', 'true');
     const zeroData = getCleanZeroData(products, suppliers, merchants);
     setProducts(zeroData.products);
     setSuppliers(zeroData.suppliers);
@@ -596,6 +653,7 @@ export default function App() {
   // Full Demo Data Loader
   const handleLoadDemoData = useCallback(() => {
     if (confirm('စနစ်အစမ်းသုံးကြည့်နိုင်ရန် ကုန်သိမ်း၊ အရောင်း၊ ဝါး/ကြိမ်ကုန်ကြမ်း၊ အော်ဒါ နမူနာဒေတာများကို ထည့်သွင်းလိုပါသလား?')) {
+      localStorage.removeItem('ledger_zero_settings_activated');
       const demo = getFullDemoData();
       setProducts(demo.products);
       setSuppliers(demo.suppliers);

@@ -12,35 +12,32 @@ import { DEFAULT_PRODUCTS, INITIAL_SUPPLIERS, INITIAL_MERCHANTS } from './defaul
 import { getTodayDateString } from '../utils/storage';
 
 export function getSampleDemoProducts(): Product[] {
-  const today = getTodayDateString();
-  return DEFAULT_PRODUCTS.map((p, idx) => {
-    // Set opening stock and min stock alert
-    // Set some products below minStockAlert to demonstrate the Low Stock Priority Reorder Alert!
-    let openingStock = 25;
-    let minStockAlert = 15;
+  const stockMap: Record<string, { current: number; minAlert: number }> = {
+    'p-1': { current: 4, minAlert: 15 }, // Low stock alert demo
+    'p-2': { current: 28, minAlert: 15 },
+    'p-3': { current: 22, minAlert: 15 },
+    'p-4': { current: 3, minAlert: 10 },  // Low stock alert demo
+    'p-5': { current: 35, minAlert: 15 },
+    'p-6': { current: 40, minAlert: 15 },
+    'p-7': { current: 18, minAlert: 12 },
+    'p-8': { current: 2, minAlert: 10 },  // Low stock alert demo
+    'p-9': { current: 16, minAlert: 15 },
+    'p-10': { current: 25, minAlert: 15 },
+    'p-11': { current: 30, minAlert: 12 },
+    'p-12': { current: 45, minAlert: 20 },
+    'p-13': { current: 20, minAlert: 20 },
+    'p-14': { current: 50, minAlert: 20 },
+    'p-15': { current: 35, minAlert: 20 },
+  };
 
-    if (p.id === 'p-1') {
-      // High priority alert: 4 left vs min 15
-      openingStock = 4;
-      minStockAlert = 15;
-    } else if (p.id === 'p-4') {
-      // High priority alert: 3 left vs min 12
-      openingStock = 3;
-      minStockAlert = 12;
-    } else if (p.id === 'p-8') {
-      // High priority alert: 2 left vs min 10
-      openingStock = 2;
-      minStockAlert = 10;
-    } else if (idx % 2 === 0) {
-      openingStock = 30;
-      minStockAlert = 10;
-    }
-
+  return DEFAULT_PRODUCTS.map((p) => {
+    const config = stockMap[p.id] || { current: 20, minAlert: 10 };
     return {
       ...p,
-      openingStock,
-      currentStock: openingStock,
-      minStockAlert,
+      openingStock: config.current,
+      currentStock: config.current,
+      minStockAlert: config.minAlert,
+      active: true,
     };
   });
 }
@@ -54,7 +51,7 @@ export function getSampleDemoSuppliers(): Supplier[] {
       name: 'ဦးဘတင်',
       phone: '09-450123456',
       village: 'ကျောက်ပန်းတောင်းရွာ',
-      notes: 'ကွမ်းအစ် အဓိက ရက်လုပ်သူ',
+      notes: 'ကွမ်းအစ် အဓိက ရက်လုပ်သူ (လက်ရာမြောက်)',
       initialAdvance: 80000,
       currentAdvanceBalance: 55000,
       totalGoodsValueDelivered: 450000,
@@ -70,7 +67,7 @@ export function getSampleDemoSuppliers(): Supplier[] {
       name: 'ဒေါ်သန်းခင်',
       phone: '09-250987654',
       village: 'ပလင်းရွာ',
-      notes: 'ဆွမ်းအုပ် နှင့် ဗန်းရက်သူ',
+      notes: 'ဆွမ်းအုပ် နှင့် ဗန်းရက်လုပ်သူ',
       initialAdvance: 50000,
       currentAdvanceBalance: 32000,
       totalGoodsValueDelivered: 280000,
@@ -86,7 +83,7 @@ export function getSampleDemoSuppliers(): Supplier[] {
       name: 'ကိုအောင်မျိုး',
       phone: '09-790112233',
       village: 'အင်ကြင်းကုန်း',
-      notes: 'ဝါးခမောက် ရက်သူ',
+      notes: 'ဝါးခမောက်နှင့် ဝါးနှီးခြင်း ရက်လုပ်သူ',
       initialAdvance: 40000,
       currentAdvanceBalance: 20000,
       totalGoodsValueDelivered: 195000,
@@ -110,6 +107,38 @@ export function getSampleDemoSuppliers(): Supplier[] {
       totalMaterialCreditGiven: 35000,
       totalRepaymentReceived: 0,
       createdAt: '2026-08-06',
+      updatedAt: today,
+    },
+    {
+      id: 's-5',
+      code: 'S-005',
+      name: 'ဒေါ်စန်းနွယ်',
+      phone: '09-960778899',
+      village: 'ညောင်ဦးအရှေ့ရွာ',
+      notes: 'လက်ဖက်အုပ် နှင့် ပန်းကန် ရက်လုပ်သူ',
+      initialAdvance: 70000,
+      currentAdvanceBalance: 38000,
+      totalGoodsValueDelivered: 390000,
+      totalAdvanceGiven: 160000,
+      totalMaterialCreditGiven: 20000,
+      totalRepaymentReceived: 45000,
+      createdAt: '2026-08-08',
+      updatedAt: today,
+    },
+    {
+      id: 's-6',
+      code: 'S-006',
+      name: 'ကိုမင်းမင်း',
+      phone: '09-770334455',
+      village: 'တောင်ကုန်းရွာ',
+      notes: 'ဝါးဗန်းနှင့် ယပ်တောင် ရက်လုပ်သူ',
+      initialAdvance: 35000,
+      currentAdvanceBalance: 18000,
+      totalGoodsValueDelivered: 160000,
+      totalAdvanceGiven: 70000,
+      totalMaterialCreditGiven: 12000,
+      totalRepaymentReceived: 15000,
+      createdAt: '2026-08-10',
       updatedAt: today,
     },
   ];
@@ -247,7 +276,73 @@ export function getSampleDemoTransactions(): TransactionRecord[] {
       netCashPaidToSupplier: 13000,
       newAdvanceTaken: 2000,
       remainingAdvanceBalance: 32000,
-      notes: 'ပုံမှန်ကုန်သိမ်း',
+      notes: 'ပုံမှန်ကုန်သိမ်း (လက်ရာသန့်)',
+      createdAt: today,
+    },
+    {
+      id: 'tx-demo-3',
+      voucherNo: 'TX-260903',
+      supplierId: 's-3',
+      supplierName: 'ကိုအောင်မျိုး',
+      supplierVillage: 'အင်ကြင်းကုန်း',
+      date: today,
+      time: '13:40',
+      type: 'COLLECTION_AND_SETTLEMENT',
+      items: [
+        {
+          productId: 'p-6',
+          productName: 'ဝါးခမောက် (ရိုးရိုး)',
+          quantity: 20,
+          unitPrice: 2200,
+          subtotal: 44000,
+          unit: 'လုံး',
+        },
+        {
+          productId: 'p-10',
+          productName: 'ဝါးနှီးခြင်း (အကြီး)',
+          quantity: 5,
+          unitPrice: 3800,
+          subtotal: 19000,
+          unit: 'လုံး',
+        },
+      ],
+      totalGoodsValue: 63000,
+      previousAdvanceBalance: 35000,
+      advanceDeducted: 15000,
+      cashPaidToSupplier: 48000,
+      netCashPaidToSupplier: 48000,
+      newAdvanceTaken: 0,
+      remainingAdvanceBalance: 20000,
+      notes: 'ဝါးနှီးရက်လုပ်မှု အဆင့်မီ၊ နောက်တစ်ပတ် ခမောက် ၃၀ ထပ်ပို့ရန် ချိန်းဆို',
+      createdAt: today,
+    },
+    {
+      id: 'tx-demo-4',
+      voucherNo: 'TX-260904',
+      supplierId: 's-4',
+      supplierName: 'ဦးဝင်းမောင်',
+      supplierVillage: 'သရက်ပင်ရွာ',
+      date: today,
+      time: '15:20',
+      type: 'COLLECTION_AND_SETTLEMENT',
+      items: [
+        {
+          productId: 'p-8',
+          productName: 'ကြိမ်တောင်း (လက်ကိုင်ပါ)',
+          quantity: 10,
+          unitPrice: 6000,
+          subtotal: 60000,
+          unit: 'လုံး',
+        },
+      ],
+      totalGoodsValue: 60000,
+      previousAdvanceBalance: 70000,
+      advanceDeducted: 25000,
+      cashPaidToSupplier: 35000,
+      netCashPaidToSupplier: 35000,
+      newAdvanceTaken: 0,
+      remainingAdvanceBalance: 45000,
+      notes: 'ကြိမ်တောင်းလက်ကိုင် အထူးခိုင်ခံ့',
       createdAt: today,
     },
   ];
@@ -290,7 +385,7 @@ export function getSampleDemoSales(): SaleRecord[] {
       deliveryVehicle: 'ရွှေမန္တလာ အဝေးပြေးကား 3B-5591',
       driverOrContact: 'ကိုအောင်ကျော် (ယာဉ်မောင်း)',
       driverPhone: '09-790123456',
-      notes: 'မန္တလေးဂိတ် အမြန်တင်ပို့ပေးရန်',
+      notes: 'မန္တလေး ၇၈ လမ်းဂိတ်သို့ အရောက်တင်ပေးရန်',
       createdAt: today,
     },
     {
@@ -319,7 +414,81 @@ export function getSampleDemoSales(): SaleRecord[] {
       deliveryVehicle: 'ဆိုင်လာယူ (လက်ငင်း)',
       driverOrContact: 'ဦးကျော်ဇင် ကိုယ်တိုင်',
       driverPhone: '09-450334455',
-      notes: 'ငွေအကျေရှင်းပြီး',
+      notes: 'ငွေအကျေရှင်းပြီး ပစ္စည်းဆိုင်တွင် လာရောက်သယ်ယူ',
+      createdAt: today,
+    },
+    {
+      id: 'sale-demo-3',
+      voucherNo: 'SL-260903',
+      date: today,
+      time: '10:15',
+      merchantId: 'm-3',
+      merchantName: 'ရန်ကုန် ရိုးရာလက်မှုတိုက်',
+      merchantTown: 'ရန်ကုန်',
+      items: [
+        {
+          productId: 'p-4',
+          productName: 'ယွန်း လက်ဖက်အုပ် (ရိုးရာ)',
+          quantity: 10,
+          unitPrice: 6000,
+          subtotal: 60000,
+          unit: 'ထည်',
+        },
+        {
+          productId: 'p-7',
+          productName: 'ဝါးဗန်း (အချော)',
+          quantity: 8,
+          unitPrice: 3800,
+          subtotal: 30400,
+          unit: 'ချပ်',
+        },
+      ],
+      totalItemsCount: 18,
+      grandTotal: 90400,
+      cashPaidByMerchant: 50000,
+      paymentMethod: 'WAVEPAY',
+      remainingReceivableBalance: 40400,
+      deliveryVehicle: 'မန္တလေးရွှေမန်းသူ အဝေးပြေး 2A-8841',
+      driverOrContact: 'ကိုစိုးမင်း (ယာဉ်မောင်း)',
+      driverPhone: '09-421112233',
+      notes: 'အောင်မင်္ဂလာ အဝေးပြေးဂိတ် ပို့ဆောင်ရန်',
+      createdAt: today,
+    },
+    {
+      id: 'sale-demo-4',
+      voucherNo: 'SL-260904',
+      date: today,
+      time: '12:00',
+      merchantId: 'm-4',
+      merchantName: 'သီရိမင်္ဂလာ လက်မှုကုန်စုံ',
+      merchantTown: 'တောင်ကြီး',
+      items: [
+        {
+          productId: 'p-6',
+          productName: 'ဝါးခမောက် (ရိုးရိုး)',
+          quantity: 15,
+          unitPrice: 2800,
+          subtotal: 42000,
+          unit: 'လုံး',
+        },
+        {
+          productId: 'p-9',
+          productName: 'ကြိမ်ဗန်း (အဝိုင်း)',
+          quantity: 6,
+          unitPrice: 4600,
+          subtotal: 27600,
+          unit: 'ချပ်',
+        },
+      ],
+      totalItemsCount: 21,
+      grandTotal: 69600,
+      cashPaidByMerchant: 69600,
+      paymentMethod: 'CASH',
+      remainingReceivableBalance: 0,
+      deliveryVehicle: 'တောင်ပေါ်ရိုးရာ ကားဂိတ်',
+      driverOrContact: 'ကိုစိုင်းအောင်ခမ်း',
+      driverPhone: '09-960778811',
+      notes: 'တောင်ကြီးသို့ တင်ပို့ငွေအကျေရှင်း',
       createdAt: today,
     },
   ];
@@ -363,6 +532,60 @@ export function getSampleDemoOrders(): MerchantOrder[] {
       notes: 'အော်ဒါအရေးကြီး၊ ပို့ဆောင်ရက် အမြန်လိုချင်',
       createdAt: today,
     },
+    {
+      id: 'ord-demo-2',
+      orderNo: 'ORD-260902',
+      orderNumber: 'ORD-260902',
+      merchantId: 'm-1',
+      merchantName: 'ရွှေမန္တလေး ယွန်းဆိုင်',
+      merchantTown: 'မန္တလေး',
+      orderDate: today,
+      deliveryTargetDate: today,
+      items: [
+        {
+          productId: 'p-3',
+          productName: 'ယွန်း ဆွမ်းအုပ် (အလတ်)',
+          quantity: 25,
+          agreedPrice: 4300,
+          subtotal: 107500,
+          unit: 'ထည်',
+        },
+      ],
+      totalOrderAmount: 107500,
+      totalEstimatedValue: 107500,
+      advanceDeposit: 40000,
+      status: 'IN_PROGRESS',
+      destinationNote: '၇၈ လမ်း၊ မန္တလေးရွှေမန်းသူ ကားဂိတ်',
+      notes: 'ယွန်းအနက်ရောင် သီးသန့် အချောကိုင်ပေးရန်',
+      createdAt: today,
+    },
+    {
+      id: 'ord-demo-3',
+      orderNo: 'ORD-260903',
+      orderNumber: 'ORD-260903',
+      merchantId: 'm-2',
+      merchantName: 'ပုဂံရတနာ အမှတ်တရဆိုင်',
+      merchantTown: 'ပုဂံ',
+      orderDate: today,
+      deliveryTargetDate: today,
+      items: [
+        {
+          productId: 'p-11',
+          productName: 'ဝါးယပ်တောင် (အလှဆင်)',
+          quantity: 30,
+          agreedPrice: 5100,
+          subtotal: 153000,
+          unit: 'ချပ်',
+        },
+      ],
+      totalOrderAmount: 153000,
+      totalEstimatedValue: 153000,
+      advanceDeposit: 153000,
+      status: 'DELIVERED',
+      destinationNote: 'သီရိပစ္စယာလမ်း၊ ပုဂံမြို့သစ်',
+      notes: 'စရန်အပြည့်ချေပြီး ပစ္စည်းလွှဲပြောင်းပေးအပ်ပြီး',
+      createdAt: today,
+    },
   ];
 }
 
@@ -385,6 +608,41 @@ export function getSampleDemoPeerTrades(): PeerTradeRecord[] {
       time: '13:00',
       notes: 'အော်ဒါလော၍ ခေတ္တ ငှားယူထုတ်ပေးထား',
     },
+    {
+      id: 'peer-demo-2',
+      peerShopName: 'မင်းနန်သူ လက်မှုတိုက်',
+      peerLocation: 'မင်းနန်သူ',
+      productId: 'p-7',
+      productName: 'ဝါးဗန်း (အချော)',
+      tradeType: 'LEND_OUT', // ထုတ်ငှားပေးထားခြင်း
+      quantity: 6,
+      unit: 'ချပ်',
+      agreedUnitPrice: 3800,
+      totalTradeValue: 22800,
+      status: 'OPEN',
+      date: today,
+      time: '14:30',
+      notes: 'ဆိုင်ချင်း ခေတ္တ အငှားချထားခြင်း',
+    },
+  ];
+}
+
+export function getSampleDemoStockAdjustments(): StockAdjustmentRecord[] {
+  const today = getTodayDateString();
+  return [
+    {
+      id: 'adj-demo-1',
+      date: today,
+      time: '09:00',
+      productId: 'p-5',
+      productName: 'ယွန်း ပန်းကန်ပြား',
+      type: 'IN_ADJUSTMENT',
+      quantity: 2,
+      previousStock: 33,
+      newStock: 35,
+      reason: 'လဆန်း စာရင်းစစ်ဆေးရာတွင် ၂ ချပ် ပိုတွေ့ရှိ၍ ညှိယူခြင်း',
+      createdAt: today,
+    },
   ];
 }
 
@@ -400,7 +658,7 @@ export function getFullDemoData() {
     sales: getSampleDemoSales(),
     orders: getSampleDemoOrders(),
     peerTrades: getSampleDemoPeerTrades(),
-    stockAdjustments: [] as StockAdjustmentRecord[],
+    stockAdjustments: getSampleDemoStockAdjustments(),
   };
 }
 

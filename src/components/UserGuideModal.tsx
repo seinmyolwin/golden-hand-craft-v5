@@ -55,6 +55,34 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<GuideTab>('overview');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [showPrintMenu, setShowPrintMenu] = useState<boolean>(false);
+  const [printAllChapters, setPrintAllChapters] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    const handleAfterPrint = () => {
+      setPrintAllChapters(false);
+    };
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => {
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+  }, []);
+
+  const handlePrintCurrent = () => {
+    setPrintAllChapters(false);
+    setShowPrintMenu(false);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
+  const handlePrintAll = () => {
+    setPrintAllChapters(true);
+    setShowPrintMenu(false);
+    setTimeout(() => {
+      window.print();
+    }, 200);
+  };
 
   if (!isOpen) return null;
 
@@ -71,11 +99,17 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
     { id: 'zero_setup', label: '၉။ စတင်အသုံးပြုမည် & ဒေတာစီမံခန့်ခွဲမှု', icon: <Sparkles className="w-4 h-4 text-amber-500" />, badge: 'အရေးကြီး' },
   ];
 
+  const filteredTabs = tabs.filter(
+    (tab) =>
+      tab.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tab.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white text-slate-900 w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-slate-200 flex flex-col h-[92vh]">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 print:static print:p-0 print:bg-white print:overflow-visible modal-printable-backdrop">
+      <div className="bg-white text-slate-900 w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-slate-200 flex flex-col h-[92vh] print:h-auto print:max-w-none print:shadow-none print:border-none print:rounded-none print:overflow-visible modal-printable-container">
         {/* Header Bar */}
-        <div className="px-4 py-3 bg-emerald-800 text-white flex items-center justify-between shrink-0 shadow-sm border-b border-emerald-900">
+        <div className="px-4 py-3 bg-emerald-800 text-white flex items-center justify-between shrink-0 shadow-sm border-b border-emerald-900 print:hidden">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-white/10 p-1 flex items-center justify-center border border-amber-300/40">
               <Logo size="sm" alt="ရွှေလက်ရာ" className="w-7 h-7" />
@@ -92,18 +126,30 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-emerald-900/80 hover:bg-emerald-700 text-emerald-200 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
-            title="ပိတ်မည်"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowPrintMenu(!showPrintMenu)}
+              className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 border border-emerald-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs"
+              title="လက်စွဲလမ်းညွှန်ကို PDF သို့မဟုတ် ပရင့်ထုတ်မည်"
+            >
+              <Printer className="w-3.5 h-3.5 text-amber-300" />
+              <span className="hidden sm:inline">PDF / ပရင့်ထုတ်မည်</span>
+              <span className="sm:hidden text-[10px] bg-amber-400 text-slate-950 px-1 py-0.2 rounded font-black">PDF</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-emerald-900/80 hover:bg-emerald-700 text-emerald-200 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
+              title="ပိတ်မည်"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        {/* Search & Subheader */}
-        <div className="p-3 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2.5 shrink-0">
+        {/* Search & Subheader Toolbar */}
+        <div className="p-3 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2.5 shrink-0 print:hidden">
           <div className="relative w-full sm:w-80">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
             <input
@@ -125,6 +171,70 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowPrintMenu(!showPrintMenu)}
+                className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-lg flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>PDF / ပရင့်ထုတ်မည်</span>
+                <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.2 rounded">PDF</span>
+              </button>
+              {showPrintMenu && (
+                <div className="absolute right-0 top-full mt-1.5 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 p-3 z-50 text-slate-900 text-xs animate-in fade-in zoom-in-95">
+                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                    <div className="font-extrabold text-slate-900 flex items-center gap-1.5">
+                      <Printer className="w-4 h-4 text-emerald-600" />
+                      <span>လက်စွဲလမ်းညွှန် PDF / ပရင့် ရွေးချယ်မှု</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowPrintMenu(false)}
+                      className="w-6 h-6 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="space-y-1.5">
+                    <button
+                      type="button"
+                      onClick={handlePrintCurrent}
+                      className="w-full text-left p-2.5 hover:bg-emerald-50 rounded-xl flex items-center gap-2.5 cursor-pointer transition-colors border border-transparent hover:border-emerald-200"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                        <Printer className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-900 text-xs">လက်ရှိအခန်း ပရင့်/PDF ထုတ်မည်</div>
+                        <div className="text-[10px] text-slate-500 font-normal">
+                          ယခုဖွင့်ထားသော ({tabs.find((t) => t.id === activeTab)?.label}) ကိုသာ ထုတ်မည်
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handlePrintAll}
+                      className="w-full text-left p-2.5 hover:bg-amber-50 rounded-xl flex items-center gap-2.5 cursor-pointer transition-colors border border-transparent hover:border-amber-200"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                        <BookOpen className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-900 text-xs">လက်စွဲစာအုပ် အပြည့်အစုံ PDF ထုတ်မည်</div>
+                        <div className="text-[10px] text-slate-500 font-normal">
+                          မာတိကာနှင့် အခန်း ၉ ခန်းစလုံး (စာမျက်နှာအစုံ) ကို စာအုပ်အဖြစ် PDF ထုတ်မည်
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                  <div className="p-2.5 bg-slate-50 rounded-xl text-[10px] text-slate-600 mt-2 border border-slate-200/80 leading-relaxed">
+                    💡 <strong>PDF သိမ်းနည်း:</strong> ပရင့်ဝင်းဒိုး ပွင့်လာပါက <strong>Destination</strong> နေရာတွင် <strong>"Save as PDF"</strong> (သို့မဟုတ် "PDF အဖြစ်သိမ်းဆည်းမည်") ကို ရွေးချယ်ပြီး <strong>Save</strong> ကို နှိပ်ပါ။
+                  </div>
+                </div>
+              )}
+            </div>
+
             {onOpenZeroReset && (
               <button
                 type="button"
@@ -142,10 +252,10 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
         </div>
 
         {/* Main Body with Sidebar and Content */}
-        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden print:overflow-visible">
           {/* Navigation Sidebar */}
-          <nav className="w-full md:w-64 bg-slate-100/80 border-b md:border-b-0 md:border-r border-slate-200 p-2 overflow-x-auto md:overflow-y-auto shrink-0 flex md:flex-col gap-1">
-            {tabs.map((tab) => {
+          <nav className="w-full md:w-64 bg-slate-100/80 border-b md:border-b-0 md:border-r border-slate-200 p-2 overflow-x-auto md:overflow-y-auto shrink-0 flex md:flex-col gap-1 print:hidden">
+            {filteredTabs.map((tab) => {
               const isSelected = activeTab === tab.id;
               return (
                 <button
@@ -179,10 +289,58 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
           </nav>
 
           {/* Guide Content Display */}
-          <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6">
+          <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6 print:p-0 print:overflow-visible">
+            {/* PRINT-ONLY COVER & HEADER */}
+            <div className="hidden print:block mb-8">
+              {printAllChapters ? (
+                <div className="text-center py-6 border-b-2 border-slate-800 space-y-3">
+                  <div className="flex justify-center mb-2">
+                    <Logo size="lg" alt="ရွှေလက်ရာ" className="w-16 h-16" />
+                  </div>
+                  <h1 className="text-2xl font-black text-slate-900">
+                    ရွှေလက်ရာ - မြန်မာ့ရိုးရာ ယွန်းထည်နှင့် ဝါးနှီးလုပ်ငန်း
+                  </h1>
+                  <p className="text-sm font-bold text-emerald-800">
+                    လုပ်ငန်းခွင်သုံး စာရင်းကိုင်စနစ် အသုံးပြုသူလက်စွဲလမ်းညွှန် (Complete Operations Manual)
+                  </p>
+                  <div className="inline-block bg-slate-100 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700">
+                    ရက်စွဲ: {new Date().toLocaleDateString('my-MM')} | အော့ဖ်လိုင်းသုံးစနစ် | စုစုပေါင်းအခန်း - ၉ ခန်း
+                  </div>
+
+                  {/* Table of Contents for Print */}
+                  <div className="mt-6 pt-4 border-t border-slate-200 text-left">
+                    <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2">
+                      မာတိကာ (Table of Contents)
+                    </h2>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-slate-700">
+                      {tabs.map((t, idx) => (
+                        <div key={t.id} className="flex justify-between py-1 border-b border-dotted border-slate-300">
+                          <span>{t.label}</span>
+                          <span className="font-mono text-slate-500">အခန်း ({idx + 1})</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between border-b-2 border-emerald-800 pb-3 mb-6">
+                  <div className="flex items-center gap-3">
+                    <Logo size="sm" alt="ရွှေလက်ရာ" className="w-9 h-9" />
+                    <div>
+                      <h2 className="text-sm font-black text-slate-900">ရွှေလက်ရာ - မြန်မာ့လက်မှု စာရင်းကိုင်စနစ်</h2>
+                      <p className="text-xs font-bold text-emerald-800">{tabs.find((t) => t.id === activeTab)?.label}</p>
+                    </div>
+                  </div>
+                  <div className="text-right text-[10px] text-slate-500">
+                    <p>ရက်စွဲ: {new Date().toLocaleDateString('my-MM')}</p>
+                    <p>အသုံးပြုသူ လက်စွဲလမ်းညွှန်</p>
+                  </div>
+                </div>
+              )}
+            </div>
             {/* OVERVIEW */}
-            {activeTab === 'overview' && (
-              <div className="space-y-5">
+            {(printAllChapters || activeTab === 'overview') && (
+              <div className={`space-y-5 ${printAllChapters ? 'pb-8 border-b-2 border-slate-300' : ''}`}>
                 <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wide">
@@ -263,8 +421,8 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
             )}
 
             {/* INBOUND VOUCHER GUIDE */}
-            {activeTab === 'inbound' && (
-              <div className="space-y-5">
+            {(printAllChapters || activeTab === 'inbound') && (
+              <div className={`space-y-5 ${printAllChapters ? 'print-page-break pt-8 pb-8 border-b-2 border-slate-300' : ''}`}>
                 <div className="border-b border-slate-200 pb-3">
                   <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
                     <ArrowDownLeft className="w-5 h-5 text-emerald-600" />
@@ -373,8 +531,8 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
             )}
 
             {/* RAW MATERIAL CREDIT & CASH ADVANCE GUIDE */}
-            {activeTab === 'raw_materials' && (
-              <div className="space-y-5">
+            {(printAllChapters || activeTab === 'raw_materials') && (
+              <div className={`space-y-5 ${printAllChapters ? 'print-page-break pt-8 pb-8 border-b-2 border-slate-300' : ''}`}>
                 <div className="border-b border-slate-200 pb-3">
                   <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
                     <Layers className="w-5 h-5 text-amber-600" />
@@ -539,8 +697,8 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
             )}
 
             {/* SALES & CAR DELIVERY GUIDE */}
-            {activeTab === 'sales' && (
-              <div className="space-y-5">
+            {(printAllChapters || activeTab === 'sales') && (
+              <div className={`space-y-5 ${printAllChapters ? 'print-page-break pt-8 pb-8 border-b-2 border-slate-300' : ''}`}>
                 <div className="border-b border-slate-200 pb-3">
                   <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
                     <ArrowUpRight className="w-5 h-5 text-blue-600" />
@@ -632,12 +790,12 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
             )}
 
             {/* INVENTORY & LOW STOCK ALERTS */}
-            {activeTab === 'inventory_alerts' && (
-              <div className="space-y-5">
+            {(printAllChapters || activeTab === 'inventory_alerts') && (
+              <div className={`space-y-5 ${printAllChapters ? 'print-page-break pt-8 pb-8 border-b-2 border-slate-300' : ''}`}>
                 <div className="border-b border-slate-200 pb-3">
                   <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
                     <AlertTriangle className="w-5 h-5 text-amber-600" />
-                    <span>၃။ လက်ကျန်ကုန်ပစ္စည်းနှင့် အနိမ့်ဆုံးသတိပေးချက် (Inventory & Reorder Alert)</span>
+                    <span>၄။ လက်ကျန်ကုန်ပစ္စည်းနှင့် အနိမ့်ဆုံးသတိပေးချက် (Inventory & Reorder Alert)</span>
                   </h3>
                   <p className="text-xs text-slate-500 mt-1">
                     အနည်းဆုံးရှိရမည့် လက်ကျန်သတ်မှတ်ခြင်းနှင့် ဦးစားပေး ထပ်မံရက်လုပ်/ဝယ်ယူရန် သတိပေးချက် ထုတ်ယူခြင်း
@@ -716,12 +874,12 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
             )}
 
             {/* ORDERS & ADVANCE DEPOSITS */}
-            {activeTab === 'orders' && (
-              <div className="space-y-4 text-xs text-slate-700 leading-relaxed">
+            {(printAllChapters || activeTab === 'orders') && (
+              <div className={`space-y-4 text-xs text-slate-700 leading-relaxed ${printAllChapters ? 'print-page-break pt-8 pb-8 border-b-2 border-slate-300' : ''}`}>
                 <div className="border-b border-slate-200 pb-3">
                   <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
                     <Package className="w-5 h-5 text-purple-600" />
-                    <span>၄။ အော်ဒါမှတ်တမ်းနှင့် စရန်ငွေ စီမံခန့်ခွဲမှု (Merchant Orders & Deposits)</span>
+                    <span>၅။ အော်ဒါမှတ်တမ်းနှင့် စရန်ငွေ စီမံခန့်ခွဲမှု (Merchant Orders & Deposits)</span>
                   </h3>
                   <p className="text-xs text-slate-500 mt-1">
                     ကြိုတင်အော်ဒါလက်ခံခြင်း၊ စရန်ငွေမှတ်တမ်းတင်ခြင်းနှင့် အရောင်းဘောင်ချာသို့ ပြောင်းလဲခြင်း
@@ -740,12 +898,12 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
             )}
 
             {/* PEER TRADING */}
-            {activeTab === 'peer_trading' && (
-              <div className="space-y-4 text-xs text-slate-700 leading-relaxed">
+            {(printAllChapters || activeTab === 'peer_trading') && (
+              <div className={`space-y-4 text-xs text-slate-700 leading-relaxed ${printAllChapters ? 'print-page-break pt-8 pb-8 border-b-2 border-slate-300' : ''}`}>
                 <div className="border-b border-slate-200 pb-3">
                   <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
                     <Users className="w-5 h-5 text-cyan-600" />
-                    <span>၅။ ဆိုင်ချင်း အငှားကုန်ဖလှယ်မှု စာရင်း (Peer Trading / Borrow & Lend)</span>
+                    <span>၆။ ဆိုင်ချင်း အငှားကုန်ဖလှယ်မှု စာရင်း (Peer Trading / Borrow & Lend)</span>
                   </h3>
                   <p className="text-xs text-slate-500 mt-1">
                     အနီးနားရှိ မိတ်ဆွေယွန်းဆိုင်များနှင့် ပစ္စည်းအငှားရောင်းချခြင်းနှင့် စာရင်းရှင်းတမ်း
@@ -767,12 +925,12 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
             )}
 
             {/* BACKUP & OFFLINE ZAPYA */}
-            {activeTab === 'backup_offline' && (
-              <div className="space-y-5">
+            {(printAllChapters || activeTab === 'backup_offline') && (
+              <div className={`space-y-5 ${printAllChapters ? 'print-page-break pt-8 pb-8 border-b-2 border-slate-300' : ''}`}>
                 <div className="border-b border-slate-200 pb-3">
                   <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
                     <Smartphone className="w-5 h-5 text-indigo-600" />
-                    <span>၆။ Shwe let yar doc. ဖိုင်တွဲနှင့် Zapya ဖြင့် အရန်သိမ်းခြင်း (Backup & Restore)</span>
+                    <span>၇။ Shwe let yar doc. ဖိုင်တွဲနှင့် Zapya ဖြင့် အရန်သိမ်းခြင်း (Backup & Restore)</span>
                   </h3>
                   <p className="text-xs text-slate-500 mt-1">
                     ဖုန်းတွင်းသို့ JSON ဖိုင်ဒေါင်းလုဒ်သိမ်းခြင်းနှင့် အင်တာနက်မလိုဘဲ ဖုန်းအချင်းချင်း ဒေတာလွှဲနည်း
@@ -812,12 +970,12 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
             )}
 
             {/* SECURITY APP LOCK */}
-            {activeTab === 'security_lock' && (
-              <div className="space-y-4 text-xs text-slate-700 leading-relaxed">
+            {(printAllChapters || activeTab === 'security_lock') && (
+              <div className={`space-y-4 text-xs text-slate-700 leading-relaxed ${printAllChapters ? 'print-page-break pt-8 pb-8 border-b-2 border-slate-300' : ''}`}>
                 <div className="border-b border-slate-200 pb-3">
                   <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
                     <Lock className="w-5 h-5 text-rose-600" />
-                    <span>၇။ လုံခြုံရေး App Lock နှင့် အရေးပေါ် Recovery Key</span>
+                    <span>၈။ လုံခြုံရေး App Lock နှင့် အရေးပေါ် Recovery Key</span>
                   </h3>
                   <p className="text-xs text-slate-500 mt-1">
                     ဆိုင်စာရင်းများ မပေါက်ကြားစေရန် စကားဝှက်ခံခြင်းနှင့် မေ့သွားပါက ဖြေရှင်းနည်း
@@ -836,8 +994,8 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
             )}
 
             {/* ZERO SETUP & START FRESH */}
-            {activeTab === 'zero_setup' && (
-              <div className="space-y-5 text-xs text-slate-700 leading-relaxed">
+            {(printAllChapters || activeTab === 'zero_setup') && (
+              <div className={`space-y-5 text-xs text-slate-700 leading-relaxed ${printAllChapters ? 'print-page-break pt-8' : ''}`}>
                 <div className="border-b border-slate-200 pb-3">
                   <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-amber-500" />
