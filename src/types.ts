@@ -122,6 +122,7 @@ export interface TransactionRecord {
   cashRepaymentReceived?: number; // ရက်လုပ်သူမှ လာရောက်ဆပ်ငွေ
   paymentMethod?: PaymentMethod | string;
   remainingAdvanceBalance: number; // လက်ကျန် အကြိုငွေစာရင်း
+  attachmentPhotos?: string[]; // ဓာတ်ပုံ သို့မဟုတ် ပြေစာ/လက်မှတ် ပုံများ
   notes?: string;
   createdAt?: string;
 }
@@ -149,6 +150,7 @@ export interface SaleRecord {
   deliveryVehicle?: string; // တင်ပေးလိုက်သည့်ကား / ယာဉ်အမှတ် / ဂိတ်
   driverOrContact?: string; // ယာဉ်မောင်း / ဆက်သွယ်ရမည့်သူ
   driverPhone?: string; // ဆက်သွယ်ရမည့် ဖုန်းနံပါတ်
+  attachmentPhotos?: string[]; // ကားဂိတ်ပြေစာ သို့မဟုတ် ကုန်ပစ္စည်း ပုံများ
   notes?: string;
   createdAt?: string;
 }
@@ -186,6 +188,8 @@ export interface ShopSettings {
   ownerName?: string;
   phone?: string;
   address?: string;
+  thermalPrinterWidth?: '58mm' | '80mm';
+  receiptFooterNote?: string;
   rawMaterialPresets?: RawMaterialPreset[];
 }
 

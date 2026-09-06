@@ -17,6 +17,8 @@ import {
   BookOpen,
   Sparkles,
   AlertTriangle,
+  TrendingUp,
+  QrCode,
 } from 'lucide-react';
 import { ShopSettings } from '../types';
 import { Logo } from './Logo';
@@ -53,6 +55,8 @@ interface HeaderProps {
   onOpenZeroSettings?: () => void;
   lowStockCount?: number;
   onOpenLowStockAlert?: () => void;
+  onOpenInsights?: () => void;
+  onOpenQRSync?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -87,6 +91,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenZeroSettings,
   lowStockCount = 0,
   onOpenLowStockAlert,
+  onOpenInsights,
+  onOpenQRSync,
 }) => {
   const handleOpenEntry = onOpenNewEntry || onOpenNewSupplierCollection;
   const handleOpenSale = onOpenNewSale || onOpenNewMerchantSale;
@@ -269,6 +275,34 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <BookOpen className="w-3.5 h-3.5 text-emerald-300" />
                 <span className="hidden sm:inline whitespace-nowrap">လမ်းညွှန်</span>
+              </button>
+            )}
+
+            {/* Smart Insights Button */}
+            {onOpenInsights && (
+              <button
+                id="header-insights-btn"
+                type="button"
+                onClick={onOpenInsights}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-800/90 hover:bg-teal-700 text-teal-100 border border-teal-400/50 shadow-xs cursor-pointer transition-all"
+                title="စမတ်သုံးသပ်ချက် - ရောင်းအားအကောင်းဆုံးနှင့် ရက်လုပ်သူကြိုငွေ စောင့်ကြည့်မှု"
+              >
+                <TrendingUp className="w-3.5 h-3.5 text-teal-300" />
+                <span className="hidden md:inline whitespace-nowrap">သုံးသပ်ချက်</span>
+              </button>
+            )}
+
+            {/* QR Sync Button */}
+            {onOpenQRSync && (
+              <button
+                id="header-qr-sync-btn"
+                type="button"
+                onClick={onOpenQRSync}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-800/90 hover:bg-emerald-700 text-emerald-100 border border-emerald-400/50 shadow-xs cursor-pointer transition-all"
+                title="QR Code ဖြင့် အင်တာနက်မလိုဘဲ ဘောင်ချာ စာရင်းသွင်း/ထုတ်ယူမည်"
+              >
+                <QrCode className="w-3.5 h-3.5 text-emerald-300" />
+                <span className="hidden lg:inline whitespace-nowrap">QR Sync</span>
               </button>
             )}
 

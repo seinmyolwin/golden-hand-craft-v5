@@ -1,14 +1,17 @@
 import React, { useRef } from 'react';
 import { TransactionRecord, ShopSettings } from '../types';
 import { formatMMK, formatNumberOnly } from '../utils/storage';
-import { X, Printer, Share2, ArrowDownLeft, CheckCircle2 } from 'lucide-react';
+import { X, Printer, Share2, ArrowDownLeft, CheckCircle2, QrCode, Receipt } from 'lucide-react';
 import { Logo } from './Logo';
+import { ThermalReceiptData } from '../services/thermalPrinter';
 
 interface VoucherModalProps {
   isOpen: boolean;
   onClose: () => void;
   transaction: TransactionRecord | null;
   shopSettings?: ShopSettings;
+  onOpenThermalReceipt?: (data: ThermalReceiptData) => void;
+  onOpenQR?: (voucherNo: string, data: unknown) => void;
 }
 
 export const VoucherModal: React.FC<VoucherModalProps> = ({
@@ -16,6 +19,8 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
   onClose,
   transaction,
   shopSettings,
+  onOpenThermalReceipt,
+  onOpenQR,
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -30,6 +35,38 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
     window.print();
   };
 
+  const handleThermalPrint = () => {
+    if (!onOpenThermalReceipt) return;
+    const items = (transaction.items || []).map((item) => ({
+      name: item.name,
+      qty: item.quantity,
+      unit: item.unit,
+      unitPrice: item.unitPrice,
+      subtotal: item.subtotal || item.quantity * item.unitPrice,
+    }));
+
+    onOpenThermalReceipt({
+      shopName,
+      tagline,
+      phone,
+      address,
+      voucherType: 'INBOUND',
+      voucherNo: transaction.voucherNo,
+      date: transaction.date,
+      time: transaction.time,
+      personName: transaction.supplierName,
+      personLabel: 'ရက်လုပ်သူ',
+      townOrVillage: transaction.supplierVillage,
+      items,
+      totalGoodsValue: transaction.totalGoodsValue,
+      advanceDeducted: transaction.advanceDeducted,
+      cashPaidToSupplier: transaction.cashPaidToSupplier,
+      newAdvanceTaken: transaction.newAdvanceTaken,
+      remainingAdvanceBalance: transaction.remainingAdvanceBalance,
+      footerMessage: shopSettings?.receiptFooterNote,
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
       <div className="bg-white text-slate-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-slate-200 flex flex-col max-h-[95vh]">
@@ -39,7 +76,29 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
             <ArrowDownLeft className="w-4 h-4 text-emerald-400" />
             <span>ကုန်သိမ်းဘောင်ချာ</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {onOpenThermalReceipt && (
+              <button
+                type="button"
+                onClick={handleThermalPrint}
+                className="px-2 py-1 bg-emerald-800 hover:bg-emerald-700 text-emerald-100 rounded text-xs flex items-center gap-1 cursor-pointer transition-colors"
+                title="Bluetooth / Thermal POS ဖြတ်ပိုင်းထုတ်မည်"
+              >
+                <Receipt className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Thermal</span>
+              </button>
+            )}
+            {onOpenQR && (
+              <button
+                type="button"
+                onClick={() => onOpenQR(transaction.voucherNo, transaction)}
+                className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs flex items-center gap-1 cursor-pointer transition-colors"
+                title="QR Code ထုတ်ယူမည်"
+              >
+                <QrCode className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">QR</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={handlePrint}
@@ -51,7 +110,7 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-7 h-7 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center cursor-pointer transition-colors"
+              className="w-7 h-7 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center cursor-pointer transition-colors ml-1"
             >
               <X className="w-4 h-4" />
             </button>

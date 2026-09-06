@@ -14,6 +14,7 @@ import {
   ArrowUpRight,
   Sparkles,
 } from 'lucide-react';
+import { PhotoAttachmentField } from './PhotoAttachmentField';
 
 interface NewEntryModalProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ export const NewEntryModal: React.FC<NewEntryModalProps> = ({
   const [newAdvanceTaken, setNewAdvanceTaken] = useState<number>(0);
   const [newAdvanceReason, setNewAdvanceReason] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
+  const [attachmentPhotos, setAttachmentPhotos] = useState<string[]>([]);
 
   useEffect(() => {
     if (initialSupplierId) {
@@ -131,6 +133,7 @@ export const NewEntryModal: React.FC<NewEntryModalProps> = ({
       netCashPaidToSupplier,
       remainingAdvanceBalance,
       notes: notes.trim(),
+      attachmentPhotos,
     };
 
     onSave(newRecord);
@@ -325,6 +328,13 @@ export const NewEntryModal: React.FC<NewEntryModalProps> = ({
               </span>
             </div>
           </div>
+
+          {/* Photo Attachment */}
+          <PhotoAttachmentField
+            photos={attachmentPhotos}
+            onChange={setAttachmentPhotos}
+            label="ကုန်သိမ်းပြေစာ / ပစ္စည်း ဓာတ်ပုံ ပူးတွဲမှတ်တမ်း"
+          />
 
           {/* Notes */}
           <div>
