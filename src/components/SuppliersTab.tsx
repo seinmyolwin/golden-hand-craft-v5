@@ -1,11 +1,12 @@
-import React, { useState, useMemo } from 'react';
-import { Supplier, TransactionRecord, RawMaterialItem, PaymentMethod } from '../types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Supplier, TransactionRecord, RawMaterialItem, PaymentMethod, Product, RawMaterialPreset } from '../types';
 import {
   formatMMK,
   formatNumberOnly,
   exportSuppliersCSV,
   getTodayDateString,
   getCurrentTimeString,
+  getStoredRawMaterialPresets,
 } from '../utils/storage';
 import {
   Users,
@@ -30,6 +31,7 @@ import {
 interface SuppliersTabProps {
   suppliers: Supplier[];
   transactions: TransactionRecord[];
+  products?: Product[];
   onAddSupplier: (supplier: Supplier) => void;
   onUpdateSupplier: (supplier: Supplier) => void;
   onOpenNewEntryWithSupplier: (supplierId: string) => void;
@@ -43,6 +45,7 @@ interface SuppliersTabProps {
 export const SuppliersTab: React.FC<SuppliersTabProps> = ({
   suppliers = [],
   transactions = [],
+  products = [],
   onAddSupplier,
   onUpdateSupplier,
   onOpenNewEntryWithSupplier,
@@ -59,14 +62,24 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
 
+  // Raw Material Credit State & Presets
+  const [presets, setPresets] = useState<RawMaterialPreset[]>(() => getStoredRawMaterialPresets());
   const [isRawMaterialModalOpen, setIsRawMaterialModalOpen] = useState<boolean>(false);
   const [selectedSupplierForRaw, setSelectedSupplierForRaw] = useState<Supplier | null>(null);
-  const [rawCategory, setRawCategory] = useState<'BAMBOO' | 'RATTAN' | 'LACQUER' | 'OTHER'>('BAMBOO');
+  const [rawCategory, setRawCategory] = useState<string>('BAMBOO');
   const [rawItemName, setRawItemName] = useState<string>('ဝါးပိုးဝါး (ဝါးလုံး)');
-  const [rawQuantity, setRawQuantity] = useState<number>(50);
+  const [rawQuantity, setRawQuantity] = useState<number>(30);
   const [rawUnit, setRawUnit] = useState<string>('လုံး');
   const [rawUnitPrice, setRawUnitPrice] = useState<number>(3500);
   const [rawNotes, setRawNotes] = useState<string>('');
+
+  // Refresh presets on modal open
+  useEffect(() => {
+    if (isRawMaterialModalOpen) {
+      const stored = getStoredRawMaterialPresets();
+      setPresets(stored);
+    }
+  }, [isRawMaterialModalOpen]);
 
   const [isRepayModalOpen, setIsRepayModalOpen] = useState<boolean>(false);
   const [selectedSupplierForRepay, setSelectedSupplierForRepay] = useState<Supplier | null>(null);
@@ -196,34 +209,38 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
       totalValue: totalRawVal,
     };
 
+    const isCashAdv = rawCategory === 'CASH_ADVANCE';
     const newTx: TransactionRecord = {
       id: `tx-raw-${Date.now()}`,
-      voucherNo: `RAW-${Date.now().toString().slice(-4)}`,
+      voucherNo: `${isCashAdv ? 'ADV' : 'RAW'}-${Date.now().toString().slice(-4)}`,
       date: getTodayDateString(),
       time: getCurrentTimeString(),
       supplierId: selectedSupplierForRaw.id,
       supplierName: selectedSupplierForRaw.name,
       supplierVillage: selectedSupplierForRaw.village,
-      type: 'RAW_MATERIAL_CREDIT',
+      type: isCashAdv ? 'ADVANCE_ONLY' : 'RAW_MATERIAL_CREDIT',
       items: [
         {
           productId: rawItem.id,
-          productName: `[ကုန်ကြမ်း] ${rawItem.name}`,
+          productName: `[${isCashAdv ? 'ငွေကြိုထုတ်' : 'ကုန်ကြမ်း'}] ${rawItem.name}`,
           quantity: rawItem.quantity,
           unit: rawItem.unit,
           unitPrice: rawItem.unitPrice,
           subtotal: rawItem.totalValue,
         },
       ],
-      rawMaterialItems: [rawItem],
+      rawMaterialItems: isCashAdv ? [] : [rawItem],
       totalGoodsValue: 0,
       previousAdvanceBalance: prevBalance,
       advanceDeducted: 0,
       newAdvanceTaken: totalRawVal,
-      newAdvanceReason: `ကြိုတင်ထုတ်ပေးသော ကုန်ကြမ်းဖိုး - ${rawItem.name} (${rawItem.quantity} ${rawItem.unit})`,
-      netCashPaidToSupplier: 0,
+      newAdvanceReason: isCashAdv
+        ? (rawNotes.trim() || `ငွေသားကြိုတင်ထုတ်ယူငွေ - ${formatMMK(totalRawVal)}`)
+        : `ကြိုတင်ထုတ်ပေးသော ကုန်ကြမ်းဖိုး - ${rawItem.name} (${rawItem.quantity} ${rawItem.unit})`,
+      cashPaidToSupplier: isCashAdv ? totalRawVal : 0,
+      netCashPaidToSupplier: isCashAdv ? totalRawVal : 0,
       remainingAdvanceBalance: newBalance,
-      notes: rawNotes.trim(),
+      notes: rawNotes.trim() || (isCashAdv ? 'ငွေသားကြိုထုတ်' : 'ကုန်ကြမ်းကြိုထုတ်'),
     };
 
     const updatedSupplier: Supplier = {
@@ -759,92 +776,247 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
                   လက်ရှိအကြိုငွေ: {formatMMK(selectedSupplierForRaw.currentAdvanceBalance || 0)}
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">အမျိုးအစား</label>
-                  <select
-                    value={rawCategory}
-                    onChange={(e) => {
-                      const cat = e.target.value as any;
-                      setRawCategory(cat);
-                      if (cat === 'BAMBOO') {
-                        setRawItemName('ဝါးပိုးဝါး (ဝါးလုံး)');
-                        setRawUnit('လုံး');
-                        setRawUnitPrice(3500);
-                      } else if (cat === 'RATTAN') {
-                        setRawItemName('ကြိမ်လုံး (စည်း)');
-                        setRawUnit('စည်း');
-                        setRawUnitPrice(12000);
-                      } else if (cat === 'LACQUER') {
-                        setRawItemName('သစ်စေး (ဗူး)');
-                        setRawUnit('ဗူး');
-                        setRawUnitPrice(45000);
-                      } else {
-                        setRawItemName('အခြားကုန်ကြမ်း');
-                        setRawUnit('ခု');
-                      }
-                    }}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-slate-800"
-                  >
-                    <option value="BAMBOO">ဝါးကုန်ကြမ်း</option>
-                    <option value="RATTAN">ကြိမ်ကုန်ကြမ်း</option>
-                    <option value="LACQUER">သစ်စေး</option>
-                    <option value="OTHER">အခြားကုန်ကြမ်း</option>
-                  </select>
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1 flex items-center justify-between">
+                      <span>အမျိုးအစား (Category)</span>
+                    </label>
+                    <select
+                      value={rawCategory}
+                      onChange={(e) => {
+                        const cat = e.target.value;
+                        setRawCategory(cat);
+                        if (cat === 'CASH_ADVANCE') {
+                          setRawItemName('ငွေသားကြိုထုတ် (Cash Advance)');
+                          setRawUnit('ကျပ်');
+                          setRawUnitPrice(1);
+                          setRawQuantity(50000);
+                        } else {
+                          const catPresets = presets.filter((p) => p.category === cat);
+                          if (catPresets.length > 0) {
+                            const first = catPresets[0];
+                            setRawItemName(first.name);
+                            setRawUnit(first.defaultUnit || 'ခု');
+                            setRawUnitPrice(first.defaultUnitPrice || 1000);
+                            setRawQuantity(cat === 'BAMBOO' ? 30 : cat === 'RATTAN' ? 10 : 5);
+                          } else if (cat === 'BAMBOO') {
+                            setRawItemName('ဝါးပိုးဝါး (ဝါးလုံး)');
+                            setRawUnit('လုံး');
+                            setRawUnitPrice(3500);
+                            setRawQuantity(30);
+                          } else if (cat === 'RATTAN') {
+                            setRawItemName('ကြိမ်လုံး (စည်း)');
+                            setRawUnit('စည်း');
+                            setRawUnitPrice(12000);
+                            setRawQuantity(10);
+                          } else {
+                            setRawItemName('အခြားကုန်ကြမ်း');
+                            setRawUnit('ခု');
+                            setRawUnitPrice(1500);
+                            setRawQuantity(5);
+                          }
+                        }
+                      }}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-slate-800 focus:ring-2 focus:ring-amber-500"
+                    >
+                      <option value="BAMBOO">ဝါးကုန်ကြမ်း</option>
+                      <option value="RATTAN">ကြိမ်ကုန်ကြမ်း</option>
+                      <option value="CASH_ADVANCE">ငွေကြိုယူ</option>
+                      <option value="OTHER">အခြားကုန်ကြမ်း</option>
+                      {/* Show any custom categories from presets */}
+                      {Array.from(new Set(presets.map((p) => String(p.category))))
+                        .filter((c: string) => !['BAMBOO', 'RATTAN', 'CASH_ADVANCE', 'OTHER', 'LACQUER'].includes(c))
+                        .map((c: string) => (
+                          <option key={c} value={c}>
+                            {presets.find((p) => p.category === c)?.categoryLabel || c}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1 flex items-center justify-between">
+                      <span>ပစ္စည်း အသင့်ရွေးရန်</span>
+                    </label>
+                    <select
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) return;
+                        if (val.startsWith('preset-')) {
+                          const pId = val.replace('preset-', '');
+                          const preset = presets.find((p) => p.id === pId);
+                          if (preset) {
+                            setRawItemName(preset.name);
+                            setRawUnit(preset.defaultUnit);
+                            setRawUnitPrice(preset.defaultUnitPrice);
+                            if (preset.category === 'CASH_ADVANCE') {
+                              setRawQuantity(50000);
+                            }
+                          }
+                        } else if (val.startsWith('prod-')) {
+                          const prodId = val.replace('prod-', '');
+                          const prod = products.find((p) => p.id === prodId);
+                          if (prod) {
+                            setRawItemName(prod.name);
+                            setRawUnit(prod.unit || 'ခု');
+                            setRawUnitPrice(prod.buyPrice || prod.price || 3000);
+                          }
+                        }
+                      }}
+                      className="w-full px-3 py-2 bg-amber-50/70 border border-amber-300 rounded-lg font-semibold text-slate-800 text-xs focus:ring-2 focus:ring-amber-500"
+                    >
+                      <option value="">-- စာရင်းထဲမှ ရွေးချယ်နိုင်သည် --</option>
+                      <optgroup label={`${rawCategory === 'BAMBOO' ? 'ဝါးကုန်ကြမ်း' : rawCategory === 'RATTAN' ? 'ကြိမ်ကုန်ကြမ်း' : rawCategory === 'CASH_ADVANCE' ? 'ငွေကြိုယူ' : 'အခြားကုန်ကြမ်း'} ပစ္စည်းများ`}>
+                        {presets
+                          .filter((p) => p.category === rawCategory)
+                          .map((p) => (
+                            <option key={p.id} value={`preset-${p.id}`}>
+                              {p.name} ({p.defaultUnit} - {formatMMK(p.defaultUnitPrice)})
+                            </option>
+                          ))}
+                      </optgroup>
+                      {products && products.length > 0 && (
+                        <optgroup label="ဆိုင် ကုန်ပစ္စည်းစာရင်းမှ ရွေးရန်">
+                          {products.map((prod) => (
+                            <option key={prod.id} value={`prod-${prod.id}`}>
+                              {prod.name} ({prod.unit})
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </select>
+                  </div>
                 </div>
+
                 <div>
-                  <label className="block text-slate-700 font-bold mb-1">ပစ္စည်းအမည်</label>
+                  <label className="block text-slate-700 font-bold mb-1 flex items-center justify-between">
+                    <span>ပစ္စည်းအမည် (သို့မဟုတ် စိတ်ကြိုက်ရိုက်ထည့်ပါ) *</span>
+                    <span className="text-[10px] text-slate-400 font-normal">တိုက်ရိုက်ပြင်နိုင်ပါသည်</span>
+                  </label>
                   <input
                     type="text"
                     value={rawItemName}
                     onChange={(e) => setRawItemName(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    placeholder="ဥပမာ - ဝါးပိုးဝါး (ဝါးလုံး) သို့မဟုတ် ငွေသားကြိုထုတ်"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
                     required
                   />
+
+                  {/* Quick Select Preset Chips */}
+                  {presets.filter((p) => p.category === rawCategory).length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {presets
+                        .filter((p) => p.category === rawCategory)
+                        .slice(0, 6)
+                        .map((p) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => {
+                              setRawItemName(p.name);
+                              setRawUnit(p.defaultUnit);
+                              setRawUnitPrice(p.defaultUnitPrice);
+                              if (p.category === 'CASH_ADVANCE') {
+                                setRawQuantity(50000);
+                              }
+                            }}
+                            className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all cursor-pointer ${
+                              rawItemName === p.name
+                                ? 'bg-amber-500 text-slate-950 border-amber-600 font-bold shadow-xs'
+                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                            }`}
+                          >
+                            {p.name}
+                          </button>
+                        ))}
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">အရေအတွက်</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={rawQuantity === 0 ? '' : rawQuantity}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
-                      setRawQuantity(isNaN(val) ? 0 : Math.max(0, val));
-                    }}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold"
-                    required
-                  />
+
+              {rawCategory === 'CASH_ADVANCE' ? (
+                <div className="grid grid-cols-2 gap-2 p-3 bg-amber-50/70 border border-amber-200 rounded-xl">
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">ကြိုယူငွေ ပမာဏ (ကျပ်) *</label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="500"
+                      value={rawQuantity === 0 ? '' : rawQuantity}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        setRawQuantity(isNaN(val) ? 0 : Math.max(0, val));
+                        setRawUnitPrice(1);
+                        setRawUnit('ကျပ်');
+                      }}
+                      className="w-full px-3 py-2 bg-white border border-amber-300 rounded-lg font-extrabold text-slate-900 text-base"
+                      placeholder="၅၀၀၀၀"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">ယူနစ်</label>
+                    <input
+                      type="text"
+                      value={rawUnit}
+                      readOnly
+                      className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-slate-600 font-bold"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">ယူနစ်</label>
-                  <input
-                    type="text"
-                    value={rawUnit}
-                    onChange={(e) => setRawUnit(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg"
-                    required
-                  />
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">အရေအတွက်</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={rawQuantity === 0 ? '' : rawQuantity}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        setRawQuantity(isNaN(val) ? 0 : Math.max(0, val));
+                      }}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">ယူနစ်</label>
+                    <input
+                      type="text"
+                      value={rawUnit}
+                      onChange={(e) => setRawUnit(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">နှုန်း (ကျပ်)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={rawUnitPrice === 0 ? '' : rawUnitPrice}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        setRawUnitPrice(isNaN(val) ? 0 : Math.max(0, val));
+                      }}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold"
+                      required
+                    />
+                  </div>
                 </div>
+              )}
+
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <div>
-                  <label className="block text-slate-700 font-bold mb-1">နှုန်း (ကျပ်)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={rawUnitPrice === 0 ? '' : rawUnitPrice}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
-                      setRawUnitPrice(isNaN(val) ? 0 : Math.max(0, val));
-                    }}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold"
-                    required
-                  />
+                  <span className="text-amber-900 font-medium block">
+                    {rawCategory === 'CASH_ADVANCE' ? 'ကြိုထုတ်ငွေ စုစုပေါင်း:' : 'ကုန်ကြမ်းတန်ဖိုး စုစုပေါင်း:'}
+                  </span>
+                  <span className="text-[11px] text-amber-800">
+                    အကြိုငွေဟောင်း: {formatMMK(selectedSupplierForRaw.currentAdvanceBalance || 0)} + {formatMMK(rawQuantity * rawUnitPrice)}
+                  </span>
                 </div>
-              </div>
-              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 flex items-center justify-between">
-                <span className="text-amber-900 font-medium">ကုန်ကြမ်းတန်ဖိုး စုစုပေါင်း:</span>
                 <span className="text-base font-black text-amber-950">
                   {formatMMK(rawQuantity * rawUnitPrice)}
                 </span>
@@ -871,7 +1043,7 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
                   type="submit"
                   className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg shadow-sm cursor-pointer transition-colors"
                 >
-                  အကြိုငွေစာရင်းတိုး၍ ထုတ်ပေးမည်
+                  {rawCategory === 'CASH_ADVANCE' ? 'ငွေကြိုယူငွေ စာရင်းသွင်းမည်' : 'အကြိုငွေစာရင်းတိုး၍ ထုတ်ပေးမည်'}
                 </button>
               </div>
             </form>

@@ -371,16 +371,16 @@ export function getSampleDemoPeerTrades(): PeerTradeRecord[] {
   return [
     {
       id: 'peer-demo-1',
-      partnerShopName: 'ရွှေပုဂံ ယွန်းလက်မှုဆိုင်',
-      partnerPhone: '09-450889900',
-      partnerTown: 'ပုဂံ',
+      peerShopName: 'ရွှေပုဂံ ယွန်းလက်မှုဆိုင်',
+      peerLocation: 'ပုဂံ',
       productId: 'p-1',
       productName: 'ယွန်း ကွမ်းအစ် (အကြီး)',
-      tradeType: 'BORROW', // ငှားယူထားခြင်း
+      tradeType: 'BORROW_IN', // ငှားယူထားခြင်း
       quantity: 5,
-      unitPrice: 4500,
-      totalAmount: 22500,
-      settled: false,
+      unit: 'ခု',
+      agreedUnitPrice: 4500,
+      totalTradeValue: 22500,
+      status: 'OPEN',
       date: today,
       time: '13:00',
       notes: 'အော်ဒါလော၍ ခေတ္တ ငှားယူထုတ်ပေးထား',

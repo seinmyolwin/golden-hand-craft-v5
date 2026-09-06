@@ -74,6 +74,16 @@ export interface SaleItem {
 
 export type PaymentMethod = 'CASH' | 'KPAY' | 'WAVE' | 'BANK_TRANSFER' | 'KBZPAY' | 'WAVEPAY' | 'OFFSET_GOODS';
 
+export interface RawMaterialPreset {
+  id: string;
+  category: 'BAMBOO' | 'RATTAN' | 'CASH_ADVANCE' | 'OTHER' | string;
+  categoryLabel: string; // e.g. "ဝါးကုန်ကြမ်း", "ကြိမ်ကုန်ကြမ်း", "ငွေကြိုယူ", "အခြားကုန်ကြမ်း"
+  name: string;
+  defaultUnit: string;
+  defaultUnitPrice: number;
+  isCustom?: boolean;
+}
+
 export interface RawMaterialItem {
   id?: string;
   productId?: string;
@@ -176,6 +186,7 @@ export interface ShopSettings {
   ownerName?: string;
   phone?: string;
   address?: string;
+  rawMaterialPresets?: RawMaterialPreset[];
 }
 
 export interface BackupReminderSettings {

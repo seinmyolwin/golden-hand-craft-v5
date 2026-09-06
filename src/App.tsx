@@ -564,6 +564,63 @@ export default function App() {
     alert('စာရင်းများနှင့် ကိန်းဂဏန်းများအားလုံးကို ၀ (သုည) အဖြစ် အောင်မြင်စွာ ရှင်းလင်းပြီးပါပြီ။ ဆိုင်ရှင်အမည်၊ ဆိုင်အမည် နှင့် ဆိုင်အချက်အလက်များကို ဆက်လက်ထိန်းသိမ်းထားပါသည်။');
   }, [products, suppliers, merchants, shopSettings, logAction]);
 
+  // Zero Settings (Real Shop Launch)
+  const handleConfirmZeroReset = useCallback(() => {
+    const zeroData = getCleanZeroData(products, suppliers, merchants);
+    setProducts(zeroData.products);
+    setSuppliers(zeroData.suppliers);
+    setMerchants(zeroData.merchants);
+    setTransactions([]);
+    setSales([]);
+    setOrders([]);
+    setPeerTrades([]);
+    setStockAdjustments([]);
+    setDeletedItems([]);
+
+    saveProducts(zeroData.products);
+    saveSuppliers(zeroData.suppliers);
+    saveMerchants(zeroData.merchants);
+    saveTransactions([]);
+    saveSales([]);
+    saveOrders([]);
+    savePeerTrades([]);
+    saveStoredStockAdjustments([]);
+    saveDeletedItems([]);
+    saveShopSettings(shopSettings);
+
+    setIsZeroResetModalOpen(false);
+    logAction('အက်ပ်ကို လက်တွေ့ စတင်အသုံးပြုခြင်း (Zero Settings)', 'All balances and transactions zeroed', 'SYSTEM');
+    alert('ဆိုင်စာရင်း အသစ်စတင်ခြင်း အောင်မြင်ပါသည်။ စာရင်းအားလုံးကို သုည (၀) သတ်မှတ်ပြီးဖြစ်၍ လက်တွေ့စတင်သုံးနိုင်ပါပြီ။');
+  }, [products, suppliers, merchants, shopSettings, logAction]);
+
+  // Full Demo Data Loader
+  const handleLoadDemoData = useCallback(() => {
+    if (confirm('စနစ်အစမ်းသုံးကြည့်နိုင်ရန် ကုန်သိမ်း၊ အရောင်း၊ ဝါး/ကြိမ်ကုန်ကြမ်း၊ အော်ဒါ နမူနာဒေတာများကို ထည့်သွင်းလိုပါသလား?')) {
+      const demo = getFullDemoData();
+      setProducts(demo.products);
+      setSuppliers(demo.suppliers);
+      setMerchants(demo.merchants);
+      setTransactions(demo.transactions);
+      setSales(demo.sales);
+      setOrders(demo.orders);
+      setPeerTrades(demo.peerTrades);
+      setStockAdjustments(demo.stockAdjustments);
+
+      saveProducts(demo.products);
+      saveSuppliers(demo.suppliers);
+      saveMerchants(demo.merchants);
+      saveTransactions(demo.transactions);
+      saveSales(demo.sales);
+      saveOrders(demo.orders);
+      savePeerTrades(demo.peerTrades);
+      saveStoredStockAdjustments(demo.stockAdjustments);
+
+      setIsZeroResetModalOpen(false);
+      logAction('နမူနာဒေတာများ အစုံအလင် သွင်းယူခြင်း', 'Full demo data populated', 'SYSTEM');
+      alert('နမူနာဒေတာများ အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ။ စနစ်ကို အစမ်းလေ့လာနိုင်ပါပြီ။');
+    }
+  }, [logAction]);
+
   // Import Backup
   const handleImportBackupData = useCallback((backup: any) => {
     if (backup.suppliers) setSuppliers(backup.suppliers);
@@ -817,6 +874,7 @@ export default function App() {
           appLockEnabled={appLockSettings.enabled ?? false}
           onOpenAppLockSettings={() => setIsAppLockSettingsOpen(true)}
           onLockApp={handleLockApp}
+          onOpenUserGuide={() => setIsUserGuideOpen(true)}
         />
 
         {/* Main Content Area - Dynamic Tab Routing */}
@@ -910,6 +968,7 @@ export default function App() {
             <SuppliersTab
               suppliers={suppliers}
               transactions={transactions}
+              products={products}
               onAddSupplier={handleAddSupplier}
               onUpdateSupplier={handleUpdateSupplier}
               onDeleteSupplier={handleDeleteSupplier}
@@ -974,6 +1033,9 @@ export default function App() {
               onTakeSnapshotNow={handleTakeSnapshotNow}
               onOpenSyncModal={() => setIsLocalSyncModalOpen(true)}
               onOpenZapyaModal={() => setIsZapyaModalOpen(true)}
+              onOpenZeroSettings={() => setIsZeroResetModalOpen(true)}
+              onLoadDemoData={handleLoadDemoData}
+              onOpenUserGuide={() => setIsUserGuideOpen(true)}
               onRestoreData={handleRestoreData}
               onAddSupplier={handleAddSupplier}
               onAddMerchant={handleAddMerchant}
@@ -1112,6 +1174,19 @@ export default function App() {
           appLockSettings={appLockSettings}
           onSave={handleUpdateAppLock}
           onLockNow={handleLockApp}
+        />
+
+        <UserGuideModal
+          isOpen={isUserGuideOpen}
+          onClose={() => setIsUserGuideOpen(false)}
+          onOpenZeroReset={() => setIsZeroResetModalOpen(true)}
+        />
+
+        <ZeroSettingsConfirmModal
+          isOpen={isZeroResetModalOpen}
+          onClose={() => setIsZeroResetModalOpen(false)}
+          onConfirmZeroReset={handleConfirmZeroReset}
+          onLoadDemoData={handleLoadDemoData}
         />
       </div>
     </ErrorBoundary>

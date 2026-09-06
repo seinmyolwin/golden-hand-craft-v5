@@ -22,6 +22,7 @@ import {
   DollarSign,
   ChevronRight,
   Sparkles,
+  Layers,
 } from 'lucide-react';
 import { Logo } from './Logo';
 
@@ -36,6 +37,7 @@ interface UserGuideModalProps {
 type GuideTab =
   | 'overview'
   | 'inbound'
+  | 'raw_materials'
   | 'sales'
   | 'inventory_alerts'
   | 'orders'
@@ -58,14 +60,15 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
 
   const tabs: { id: GuideTab; label: string; icon: React.ReactNode; badge?: string }[] = [
     { id: 'overview', label: 'စနစ်အကျဉ်းချုပ်', icon: <BookOpen className="w-4 h-4" /> },
-    { id: 'inbound', label: '၁။ ကုန်သိမ်းဘောင်ချာဖွင့်ခြင်း', icon: <ArrowDownLeft className="w-4 h-4 text-emerald-600" /> },
-    { id: 'sales', label: '၂။ လက်ကားအရောင်းနှင့် ကားဂိတ်', icon: <ArrowUpRight className="w-4 h-4 text-blue-600" /> },
-    { id: 'inventory_alerts', label: '၃။ ကုန်လက်ကျန်နှင့် သတိပေးချက်', icon: <AlertTriangle className="w-4 h-4 text-amber-600" />, badge: 'အသစ်' },
-    { id: 'orders', label: '၄။ အော်ဒါမှတ်တမ်းနှင့် စရန်ငွေ', icon: <Package className="w-4 h-4 text-purple-600" /> },
-    { id: 'peer_trading', label: '၅။ ဆိုင်ချင်း အငှားကုန်ဖလှယ်မှု', icon: <Users className="w-4 h-4 text-cyan-600" /> },
-    { id: 'backup_offline', label: '၆။ Shwe let yar doc. & Zapya', icon: <Smartphone className="w-4 h-4 text-indigo-600" /> },
-    { id: 'security_lock', label: '၇။ App Lock နှင့် စကားဝှက်', icon: <Lock className="w-4 h-4 text-rose-600" /> },
-    { id: 'zero_setup', label: '၈။ စတင်အသုံးပြုမည် (Zero Data)', icon: <Sparkles className="w-4 h-4 text-amber-500" />, badge: 'အရေးကြီး' },
+    { id: 'inbound', label: '၁။ ကုန်သိမ်းဘောင်ချာ မိုဒယ်လ်', icon: <ArrowDownLeft className="w-4 h-4 text-emerald-600" /> },
+    { id: 'raw_materials', label: '၂။ ဝါး/ကြိမ်ကုန်ကြမ်း & ငွေကြိုယူ', icon: <Layers className="w-4 h-4 text-amber-600" />, badge: 'အသစ်' },
+    { id: 'sales', label: '၃။ လက်ကားအရောင်းနှင့် ကားဂိတ်', icon: <ArrowUpRight className="w-4 h-4 text-blue-600" /> },
+    { id: 'inventory_alerts', label: '၄။ ကုန်လက်ကျန်နှင့် သတိပေးချက်', icon: <AlertTriangle className="w-4 h-4 text-amber-600" /> },
+    { id: 'orders', label: '၅။ အော်ဒါမှတ်တမ်းနှင့် စရန်ငွေ', icon: <Package className="w-4 h-4 text-purple-600" /> },
+    { id: 'peer_trading', label: '၆။ ဆိုင်ချင်း အငှားကုန်ဖလှယ်မှု', icon: <Users className="w-4 h-4 text-cyan-600" /> },
+    { id: 'backup_offline', label: '၇။ Shwe let yar doc. & Zapya', icon: <Smartphone className="w-4 h-4 text-indigo-600" /> },
+    { id: 'security_lock', label: '၈။ App Lock နှင့် စကားဝှက်', icon: <Lock className="w-4 h-4 text-rose-600" /> },
+    { id: 'zero_setup', label: '၉။ စတင်အသုံးပြုမည် & ဒေတာစီမံခန့်ခွဲမှု', icon: <Sparkles className="w-4 h-4 text-amber-500" />, badge: 'အရေးကြီး' },
   ];
 
   return (
@@ -369,13 +372,179 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
               </div>
             )}
 
+            {/* RAW MATERIAL CREDIT & CASH ADVANCE GUIDE */}
+            {activeTab === 'raw_materials' && (
+              <div className="space-y-5">
+                <div className="border-b border-slate-200 pb-3">
+                  <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                    <Layers className="w-5 h-5 text-amber-600" />
+                    <span>၂။ ဝါး၊ ကြိမ်နှင့် ကုန်ကြမ်းကြိုထုတ် / ငွေကြိုယူ မိုဒယ်လ် (Raw Material Credit & Cash Advance)</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">
+                    ရက်လုပ်သူများထံသို့ ဝါး၊ ကြိမ်၊ အခြားကုန်ကြမ်းများ ကြိုတင်ထုတ်ပေးခြင်း သို့မဟုတ် ငွေကြိုထုတ်ပေးခြင်းတို့ကို ဘောင်ချာဖွင့်၍ အကြိုငွေစာရင်းထဲ တိုးမြှင့်မှတ်တမ်းတင်နည်း
+                  </p>
+                </div>
+
+                {/* SCREEN SHOT MOCKUP: Raw Material Modal */}
+                <div className="rounded-2xl border-2 border-amber-400 bg-slate-900 p-3 sm:p-4 text-white shadow-xl space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-700 pb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-rose-500 inline-block" />
+                      <span className="w-3 h-3 rounded-full bg-amber-500 inline-block" />
+                      <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block" />
+                      <span className="text-[11px] font-mono text-amber-300 ml-2">
+                        [မျက်နှာပြင်ပုံစံ - ဝါးကြိမ်ကုန်ကြမ်းကြိုထုတ်ပေးခြင်း မိုဒယ်လ်]
+                      </span>
+                    </div>
+                    <span className="text-[10px] bg-amber-600 px-2 py-0.5 rounded text-white font-bold">
+                      + ကုန်ကြမ်းထုတ်ပေးမည် ခလုတ်
+                    </span>
+                  </div>
+
+                  {/* Mockup Modal Frame */}
+                  <div className="bg-slate-850 rounded-xl p-3 sm:p-4 border border-slate-700 space-y-3 text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-800 p-2.5 rounded-lg border border-slate-700">
+                      <div>
+                        <span className="text-[10px] text-slate-400">ရက်လုပ်သူ (ရွာ/လိပ်စာ):</span>
+                        <div className="font-bold text-white text-sm">ကိုအောင်မြင့် (ကျောက်ကာရွာ)</div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] text-slate-400">လက်ရှိ အကြိုငွေကျန်:</span>
+                        <div className="font-bold text-amber-300 text-sm">၄၀,၀၀၀ ကျပ်</div>
+                      </div>
+                    </div>
+
+                    {/* Inputs Mockup */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div className="p-2.5 bg-slate-800/90 rounded-lg border border-slate-700 space-y-1">
+                        <span className="text-[10px] text-slate-400 font-bold block">
+                          ၁။ အမျိုးအစား ရွေးချယ်မှု (Category Dropdown)
+                        </span>
+                        <div className="p-1.5 bg-slate-900 rounded border border-amber-500/50 text-amber-300 font-bold flex items-center justify-between">
+                          <span>ဝါးကုန်ကြမ်း (BAMBOO)</span>
+                          <span className="text-[10px] text-slate-400 font-normal">▼</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 pt-0.5">
+                          ရွေးချယ်နိုင်သည်များ - ဝါးကုန်ကြမ်း၊ ကြိမ်ကုန်ကြမ်း၊ ငွေကြိုယူ၊ အခြားကုန်ကြမ်း
+                        </div>
+                      </div>
+
+                      <div className="p-2.5 bg-slate-800/90 rounded-lg border border-slate-700 space-y-1">
+                        <span className="text-[10px] text-slate-400 font-bold block">
+                          ၂။ ကုန်ကြမ်းပစ္စည်းအမည် (Presets & Custom)
+                        </span>
+                        <div className="p-1.5 bg-slate-900 rounded border border-slate-600 text-white font-bold flex items-center justify-between">
+                          <span>ဝါးပိုးဝါး (အလုံး)</span>
+                          <span className="text-[10px] text-slate-400 font-normal">▼</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 pt-0.5">
+                          Preset ထဲမှ ရွေးနိုင်သလို စာရိုက်ထည့်၍လည်း စိတ်ကြိုက်ထည့်နိုင်သည်
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Line Item Mockup */}
+                    <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-700 space-y-2">
+                      <div className="flex justify-between text-[11px] text-slate-400 border-b border-slate-800 pb-1">
+                        <span>ပစ္စည်း / အကြောင်းအရာ</span>
+                        <span>အရေအတွက်</span>
+                        <span>ပေါက်ဈေး</span>
+                        <span>ကျသင့်ငွေ</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-white items-center py-1">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                          ဝါးပိုးဝါး (အလုံး)
+                        </span>
+                        <span>၂၀ လုံး</span>
+                        <span>၃,၅၀၀ ကျပ်</span>
+                        <span className="text-amber-300 font-mono">၇၀,၀၀၀ ကျပ်</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-white items-center py-1 border-t border-slate-800/80">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-amber-400" />
+                          ကြိမ်လုံးကြီး
+                        </span>
+                        <span>၂ စည်း</span>
+                        <span>၁၂,၀၀၀ ကျပ်</span>
+                        <span className="text-amber-300 font-mono">၂၄,၀၀၀ ကျပ်</span>
+                      </div>
+                    </div>
+
+                    {/* Total and Balance Update Mockup */}
+                    <div className="grid grid-cols-2 gap-2 text-center">
+                      <div className="p-2.5 bg-amber-950/40 rounded-lg border border-amber-600/40">
+                        <span className="text-[10px] text-amber-200 block">ယခု ထုတ်ပေးသည့် ကုန်ကြမ်းတန်ဖိုး စုစုပေါင်း</span>
+                        <span className="font-extrabold text-sm text-amber-300">၉၄,၀၀၀ ကျပ်</span>
+                      </div>
+                      <div className="p-2.5 bg-emerald-950/40 rounded-lg border border-emerald-600/40">
+                        <span className="text-[10px] text-emerald-200 block">ထုတ်ပေးပြီးနောက် အကြိုငွေ စုစုပေါင်းလက်ကျန်</span>
+                        <span className="font-extrabold text-sm text-emerald-300">၁၃၄,၀၀၀ ကျပ်</span>
+                      </div>
+                    </div>
+
+                    <div className="p-2 bg-slate-800 rounded text-[11px] text-slate-300 flex items-center justify-between">
+                      <span>ထုတ်ပေးမည့် ဘောင်ချာအမျိုးအစား:</span>
+                      <span className="font-bold text-amber-400">ဘောင်ချာနံပါတ်: MAT-20260905-001 (ကုန်ကြမ်းကြိုထုတ်ပြေစာ)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Important Instructions */}
+                <div className="space-y-3 text-xs text-slate-700 leading-relaxed">
+                  <h4 className="font-bold text-sm text-slate-900">အဓိက အသုံးပြုနည်းနှင့် မှတ်သားဖွယ်ရာများ:</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="p-3.5 bg-amber-50/70 border border-amber-200 rounded-xl space-y-1.5">
+                      <div className="font-bold text-amber-950 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-amber-600" />
+                        <span>၁။ အမျိုးအစား ၄ မျိုး ရွေးချယ်မှု</span>
+                      </div>
+                      <p className="text-slate-600 text-[11px]">
+                        <strong>"ဝါးကုန်ကြမ်း"</strong>၊ <strong>"ကြိမ်ကုန်ကြမ်း"</strong>၊ <strong>"ငွေကြိုယူ"</strong>၊ <strong>"အခြားကုန်ကြမ်း"</strong> ဟူ၍ အတိအကျ ခွဲခြားထားပါသည်။ သစ်စေးကို ဖြုတ်ထားပြီး လိုအပ်ပါက အခြားကုန်ကြမ်းတွင် ထည့်သွင်းနိုင်ပါသည်။
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl space-y-1.5">
+                      <div className="font-bold text-blue-950 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-blue-600" />
+                        <span>၂။ "ငွေကြိုယူ" (Cash Advance) သီးသန့် အလိုအလျောက် သတ်မှတ်ခြင်း</span>
+                      </div>
+                      <p className="text-slate-600 text-[11px]">
+                        အမျိုးအစားတွင် <strong>"ငွေကြိုယူ"</strong> ကို ရွေးချယ်လိုက်ပါက ယူနစ်ကို <strong>"ကျပ်"</strong> အဖြစ်လည်းကောင်း၊ ပေါက်ဈေးကို <strong>"၁ ကျပ်"</strong> အဖြစ်လည်းကောင်း စနစ်မှ အလိုအလျောက် သတ်မှတ်ပေးပြီး ရက်လုပ်သူယူမည့် ငွေပမာဏကိုသာ တိုက်ရိုက်ရိုက်ထည့်ပေးရန် လိုအပ်ပါသည်။
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-1.5">
+                      <div className="font-bold text-emerald-950 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                        <span>၃။ အကြိုငွေစာရင်း အလိုအလျောက် တိုးခြင်း</span>
+                      </div>
+                      <p className="text-slate-600 text-[11px]">
+                        ကုန်ကြမ်းကြိုထုတ်ပေးမှု (သို့မဟုတ်) ငွေကြိုယူမှု အတည်ပြုလိုက်ပါက ရက်လုပ်သူ၏ အကြိုငွေလက်ကျန်တွင် ချက်ချင်း တိုးသွားပြီး နောက်တစ်ကြိမ် ကုန်သိမ်းဘောင်ချာ ဖွင့်သောအခါ အဆိုပါငွေကို ပြန်လည်နုတ်ယူရှင်းလင်းနိုင်ပါသည်။
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 bg-purple-50/70 border border-purple-200 rounded-xl space-y-1.5">
+                      <div className="font-bold text-purple-950 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-purple-600" />
+                        <span>၄။ ဆက်တင်တွင် စိတ်ကြိုက် ကုန်ကြမ်းအမည်များ ထည့်သွင်းစီမံခြင်း</span>
+                      </div>
+                      <p className="text-slate-600 text-[11px]">
+                        <strong>"ဆက်တင် (Settings)"</strong> Tab ရှိ <strong>"ဝါး၊ ကြိမ်နှင့် ကုန်ကြမ်းကြိုထုတ် အမျိုးအစားများ စိတ်ကြိုက်စီမံခြင်း"</strong> ကဏ္ဍတွင် မိမိဆိုင်သုံး ကုန်ကြမ်းအမည်များ၊ ယူနစ်နှင့် ပေါက်ဈေးများကို စိတ်ကြိုက် အသစ်ထည့်ခြင်း၊ ဖျက်ပယ်ခြင်း ပြုလုပ်ထားနိုင်ပါသည်။
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* SALES & CAR DELIVERY GUIDE */}
             {activeTab === 'sales' && (
               <div className="space-y-5">
                 <div className="border-b border-slate-200 pb-3">
                   <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
                     <ArrowUpRight className="w-5 h-5 text-blue-600" />
-                    <span>၂။ လက်ကားအရောင်းဘောင်ချာနှင့် ကားဂိတ်ပို့ဆောင်မှု (Wholesale Sales & Delivery)</span>
+                    <span>၃။ လက်ကားအရောင်းဘောင်ချာနှင့် ကားဂိတ်ပို့ဆောင်မှု (Wholesale Sales & Delivery)</span>
                   </h3>
                   <p className="text-xs text-slate-500 mt-1">
                     ကုန်သည်ရွေးချယ်ခြင်း၊ ကားဂိတ်/ယာဉ်မောင်း/ဖုန်းနံပါတ် ဖြည့်သွင်းခြင်းနှင့် ဘောင်ချာထုတ်နည်း
@@ -672,21 +841,51 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
                 <div className="border-b border-slate-200 pb-3">
                   <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-amber-500" />
-                    <span>၈။ အက်ပ်ကို လက်တွေ့စတင်အသုံးပြုမည် (Zero Setting vs Demo Data)</span>
+                    <span>၉။ ဒေတာ စီမံခန့်ခွဲမှု ရွေးချယ်စရာ (၃) ခု ရှင်းလင်းချက် (Data Setup Options)</span>
                   </h3>
                   <p className="text-xs text-slate-500 mt-1">
-                    နမူနာဒေတာများကို ရှင်းလင်းပြီး လက်ကျန်သုည၊ ရရန်ပေးရန်သုည စာရင်းသစ်ဖြင့် စတင်ခြင်း
+                    ဆက်တင် (Settings) ရှိ နမူနာဒေတာထည့်ခြင်း၊ ဆိုင်စာရင်းသစ်စတင်ခြင်းနှင့် ဒေတာအားလုံးရှင်းထုတ်ခြင်းတို့၏ ကွဲပြားချက်များ
                   </p>
+                </div>
+
+                {/* 3 Cards Explanation */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="p-3.5 rounded-xl border-2 border-emerald-300 bg-emerald-50/50 space-y-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      စမ်းသပ်ရန်
+                    </span>
+                    <h4 className="font-bold text-slate-900 text-xs">၁။ နမူနာဒေတာ သွင်းမည်</h4>
+                    <p className="text-[11px] text-slate-600 leading-relaxed">
+                      အက်ပ်ကို မသုံးမီ စမ်းသပ်လေ့လာလိုသူများအတွက် ကုန်သိမ်း၊ အရောင်း၊ ဝါးကြိမ်၊ အော်ဒါ နမူနာစာရင်းများကို သင့်တင့်မျှတစွာ ထည့်သွင်းပေးပါသည်။
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl border-2 border-amber-400 bg-amber-50/60 space-y-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-950 border border-amber-400">
+                      ဆိုင်သုံးရန် (အကြံပြုချက်)
+                    </span>
+                    <h4 className="font-bold text-slate-950 text-xs">၂။ ဆိုင်စာရင်းသစ် စတင်မည် (Zero Settings)</h4>
+                    <p className="text-[11px] text-slate-700 leading-relaxed">
+                      ဆိုင်အမည်၊ ကုန်ပစ္စည်းနှင့် မိတ်ဆွေစာရင်းကို မဖျက်ဘဲ လက်ကျန်ပစ္စည်း၊ အကြွေး၊ အကြိုငွေ အားလုံးကို ၀ (သုည) သတ်မှတ်ပြီး စာရင်းအသစ် စတင်ပါသည်။
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl border-2 border-rose-300 bg-rose-50/50 space-y-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300">
+                      အပြီးတိုင်ဖျက်ရန်
+                    </span>
+                    <h4 className="font-bold text-rose-950 text-xs">၃။ ဒေတာအားလုံး ရှင်းထုတ်မည်</h4>
+                    <p className="text-[11px] text-rose-700 leading-relaxed">
+                      အက်ပ်ကို စက်ဆင်ခါစအတိုင်း အကုန်ရှင်းထုတ်လိုပါက အသုံးပြုရန် ဖြစ်ပြီး မဖျက်မီ အလိုအလျောက် Snapshot အရန်သိမ်းပေးပါသည်။
+                    </p>
+                  </div>
                 </div>
 
                 <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl space-y-3">
                   <div className="font-black text-amber-950 text-sm flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-amber-600" />
-                    <span>"စတင်အသုံးပြုမည်" ခလုတ်၏ အလုပ်လုပ်ပုံ:</span>
+                    <span>ဆိုင်စာရင်း အသစ်စတင်ရာတွင် ပြုလုပ်ပေးမည့်အချက်များ:</span>
                   </div>
-                  <p className="leading-relaxed">
-                    လူကြီးမင်း၏ ဆိုင်တွင် လက်တွေ့နေ့စဉ်စာရင်း စတင်ရေးသွင်းလိုပါက <strong>"စတင်အသုံးပြုမည် (Start Fresh)"</strong> ခလုတ်ကို နှိပ်ပါ။
-                  </p>
                   <div className="bg-white p-3 rounded-xl border border-amber-200 space-y-1.5 font-medium">
                     <div className="flex items-center gap-2 text-emerald-800">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />

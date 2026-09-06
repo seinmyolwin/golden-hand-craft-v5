@@ -10,6 +10,7 @@ import {
   BackupReminderSettings,
   AppLockSettings,
   AutoRecoverySnapshot,
+  RawMaterialPreset,
 } from '../types';
 import {
   exportBackupJSON,
@@ -28,6 +29,9 @@ import {
   formatNumberOnly,
   getTodayDateString,
   getCurrentTimeString,
+  getStoredRawMaterialPresets,
+  saveStoredRawMaterialPresets,
+  DEFAULT_RAW_MATERIAL_PRESETS,
 } from '../utils/storage';
 import { Logo } from './Logo';
 import {
@@ -69,6 +73,7 @@ import {
   SlidersHorizontal,
   BookOpen,
   Sparkles,
+  Layers,
 } from 'lucide-react';
 import {
   DEFAULT_PRODUCTS,
@@ -197,6 +202,64 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
   const [prodUnit, setProdUnit] = useState<string>('ထည်');
   const [prodOpeningStock, setProdOpeningStock] = useState<number>(0);
   const [prodMinStock, setProdMinStock] = useState<number>(10);
+
+  // Raw Material Presets State
+  const [rawMaterialPresets, setRawMaterialPresets] = useState<RawMaterialPreset[]>(() =>
+    getStoredRawMaterialPresets()
+  );
+  const [isAddPresetOpen, setIsAddPresetOpen] = useState<boolean>(false);
+  const [presetCategory, setPresetCategory] = useState<string>('BAMBOO');
+  const [presetName, setPresetName] = useState<string>('');
+  const [presetUnit, setPresetUnit] = useState<string>('လုံး');
+  const [presetPrice, setPresetPrice] = useState<number>(3500);
+  const [presetCategoryFilter, setPresetCategoryFilter] = useState<string>('all');
+
+  const handleSavePreset = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!presetName.trim()) {
+      alert('ပစ္စည်းအမည် ရိုက်ထည့်ပေးပါ');
+      return;
+    }
+    const catLabels: Record<string, string> = {
+      BAMBOO: 'ဝါးကုန်ကြမ်း',
+      RATTAN: 'ကြိမ်ကုန်ကြမ်း',
+      CASH_ADVANCE: 'ငွေကြိုယူ',
+      OTHER: 'အခြားကုန်ကြမ်း',
+    };
+    const newPreset: RawMaterialPreset = {
+      id: `preset-${Date.now()}`,
+      name: presetName.trim(),
+      category: presetCategory,
+      categoryLabel: catLabels[presetCategory] || presetCategory,
+      defaultUnit: presetUnit.trim() || 'ခု',
+      defaultUnitPrice: Number(presetPrice) || 0,
+      isCustom: true,
+    };
+    const updated = [...rawMaterialPresets, newPreset];
+    setRawMaterialPresets(updated);
+    saveStoredRawMaterialPresets(updated);
+    setIsAddPresetOpen(false);
+    setPresetName('');
+    alert(`"${newPreset.name}" ကို ကုန်ကြမ်းကြိုထုတ် ရွေးချယ်မှုစာရင်းထဲ ထည့်သွင်းပြီးပါပြီ`);
+  };
+
+  const handleDeletePreset = (id: string, name: string) => {
+    if (confirm(`"${name}" ကို ရွေးချယ်မှုစာရင်းထဲမှ ဖျက်ထုတ်လိုပါသလား?`)) {
+      const updated = rawMaterialPresets.filter((p) => p.id !== id);
+      setRawMaterialPresets(updated);
+      saveStoredRawMaterialPresets(updated);
+    }
+  };
+
+  const handleResetPresetsToDefault = () => {
+    if (
+      confirm('ကုန်ကြမ်းကြိုထုတ် ရွေးချယ်မှုစာရင်းကို မူလသတ်မှတ်ချက်များအတိုင်း ပြန်လည်ထားရှိလိုပါသလား?')
+    ) {
+      setRawMaterialPresets(DEFAULT_RAW_MATERIAL_PRESETS);
+      saveStoredRawMaterialPresets(DEFAULT_RAW_MATERIAL_PRESETS);
+      alert('မူလကုန်ကြမ်းစာရင်းများ ပြန်လည်သတ်မှတ်ပြီးပါပြီ');
+    }
+  };
 
   // Download Notification State
   const [downloadSuccessMsg, setDownloadSuccessMsg] = useState<string>('');
@@ -1574,93 +1637,234 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
         </div>
       </div>
 
-      {/* Advanced Quick Seed & Reset Tools */}
-      <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-2xs space-y-3">
-        <h3 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-1.5">
-          <RefreshCw className="w-4 h-4 text-slate-600" />
-          <span>အဆင့်မြင့် စီမံခန့်ခွဲမှုနှင့် အစမ်းဒေတာများ</span>
-        </h3>
-
-        <div className="space-y-2">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200 gap-2">
-            <div>
-              <span className="font-bold text-xs text-slate-900 block">
-                ကုန်ကြမ်းပေးသွင်းသူ ၁၀၀ ဦး စမ်းသပ်ဒေတာ ထည့်သွင်းမည်
-              </span>
-              <span className="text-[11px] text-slate-500">
-                ရွာအစုံမှ ရက်လုပ်သူ ၁၀၀ ဦး နှင့် အကြိုငွေစာရင်းများ ထည့်သွင်းစမ်းသပ်ရန်
-              </span>
-            </div>
+      {/* ================= RAW MATERIAL PRESETS MANAGEMENT ================= */}
+      <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-2xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
+          <div>
+            <h3 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-1.5">
+              <Layers className="w-4 h-4 text-amber-600" />
+              <span>ဝါး၊ ကြိမ်နှင့် ကုန်ကြမ်းကြိုထုတ် အမျိုးအစားများ စိတ်ကြိုက်စီမံခြင်း</span>
+            </h3>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              ရက်လုပ်သူများထံ ကုန်ကြမ်းကြိုထုတ်ပေးရာတွင် drop-down ၌ အမြန်ရွေးချယ်နိုင်သော ကုန်ကြမ်းအမည်များ၊ ယူနစ်နှင့် ပေါက်ဈေးများကို စိတ်ကြိုက်ထည့်သွင်း/ဖျက်ပယ်နိုင်ပါသည်
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              id="seed-100-suppliers-btn"
-              onClick={handleLoad100Suppliers}
-              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-1 cursor-pointer transition-colors shrink-0"
+              onClick={handleResetPresetsToDefault}
+              className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg cursor-pointer transition-colors"
             >
-              <Users className="w-3.5 h-3.5 text-emerald-400" />
-              <span>၁၀၀ ဦး ထည့်မည်</span>
+              မူလအတိုင်း ပြန်ထားမည်
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsAddPresetOpen(true)}
+              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-lg flex items-center gap-1 shadow-xs cursor-pointer transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>ကုန်ကြမ်းအသစ် ထည့်မည်</span>
             </button>
           </div>
+        </div>
 
-          {/* Start App with Zero Setting */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-amber-50 border border-amber-200 gap-2">
-            <div>
-              <span className="font-extrabold text-xs text-slate-950 block flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
-                အက်ပ်ကို လက်တွေ့ စတင်အသုံးပြုမည် (Zero Settings)
-              </span>
-              <span className="text-[11px] text-slate-600">
-                လက်ကျန်နှင့် ရရန်/ပေးရန် ဒေတာကိန်းဂဏန်း အားလုံးကို ၀ (သုည) သတ်မှတ်ပြီး စာရင်းသစ် စတင်ရန်
-              </span>
-            </div>
+        {/* Category Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+          {[
+            { id: 'all', label: 'အားလုံး', count: rawMaterialPresets.length },
+            { id: 'BAMBOO', label: 'ဝါးကုန်ကြမ်း', count: rawMaterialPresets.filter((p) => p.category === 'BAMBOO').length },
+            { id: 'RATTAN', label: 'ကြိမ်ကုန်ကြမ်း', count: rawMaterialPresets.filter((p) => p.category === 'RATTAN').length },
+            { id: 'CASH_ADVANCE', label: 'ငွေကြိုယူ', count: rawMaterialPresets.filter((p) => p.category === 'CASH_ADVANCE').length },
+            { id: 'OTHER', label: 'အခြားကုန်ကြမ်း', count: rawMaterialPresets.filter((p) => p.category === 'OTHER').length },
+          ].map((cat) => (
             <button
+              key={cat.id}
               type="button"
-              id="settings-zero-data-btn"
-              onClick={onOpenZeroSettings || handleClearAll}
-              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-black text-xs rounded-lg cursor-pointer transition-all shrink-0 shadow-xs border border-amber-400"
+              onClick={() => setPresetCategoryFilter(cat.id)}
+              className={`px-3 py-1 text-xs rounded-full font-bold cursor-pointer transition-colors shrink-0 ${
+                presetCategoryFilter === cat.id
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
             >
-              သုည (၀) သတ်မှတ်မည်
+              {cat.label} ({cat.count})
             </button>
+          ))}
+        </div>
+
+        {/* Presets List Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+          {rawMaterialPresets
+            .filter((p) => presetCategoryFilter === 'all' || p.category === presetCategoryFilter)
+            .map((preset) => {
+              const badgeColor =
+                preset.category === 'BAMBOO'
+                  ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                  : preset.category === 'RATTAN'
+                  ? 'bg-amber-100 text-amber-800 border-amber-200'
+                  : preset.category === 'CASH_ADVANCE'
+                  ? 'bg-blue-100 text-blue-800 border-blue-200'
+                  : 'bg-slate-100 text-slate-800 border-slate-200';
+
+              return (
+                <div
+                  key={preset.id}
+                  className="p-3 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 flex items-center justify-between gap-2 transition-all"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${badgeColor}`}>
+                        {preset.categoryLabel || preset.category}
+                      </span>
+                    </div>
+                    <h4 className="font-bold text-xs text-slate-900 truncate">{preset.name}</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      ယူနစ်: <span className="font-semibold text-slate-700">{preset.defaultUnit}</span>
+                      {preset.category !== 'CASH_ADVANCE' && (
+                        <>
+                          {' '}• ပေါက်ဈေး:{' '}
+                          <span className="font-bold text-slate-900">
+                            {formatNumberOnly(preset.defaultUnitPrice)} ကျပ်
+                          </span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeletePreset(preset.id, preset.name)}
+                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                    title="ဖျက်မည်"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            })}
+        </div>
+      </div>
+
+      {/* ================= DATA MANAGEMENT & SETUP OPTIONS ================= */}
+      <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-2xs space-y-4">
+        <div>
+          <h3 className="font-bold text-xs sm:text-base text-slate-900 flex items-center gap-2">
+            <RefreshCw className="w-4.5 h-4.5 text-slate-700" />
+            <span>ဒေတာ စီမံခန့်ခွဲမှုနှင့် စနစ်စတင်ခြင်း (Data Management & Setup Options)</span>
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            လုပ်ဆောင်ချက် (၃) ခု၏ မတူညီသော ရည်ရွယ်ချက်များကို ရှင်းလင်းစွာ ခွဲခြားထားပြီး စိတ်ချလက်ချ အသုံးပြုနိုင်ပါသည်
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+          {/* Card 1: Load Demo Data */}
+          <div className="p-4 rounded-xl border-2 border-emerald-200 bg-emerald-50/40 flex flex-col justify-between space-y-3">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  စမ်းသပ်လေ့လာရန် (For Practice)
+                </span>
+                <BookOpen className="w-4 h-4 text-emerald-600" />
+              </div>
+              <h4 className="font-extrabold text-sm text-slate-900">
+                ၁။ နမူနာဒေတာ သွင်းမည် (Load Demo Data)
+              </h4>
+              <p className="text-[11px] text-slate-600 leading-relaxed">
+                စနစ်ကို အစမ်းသုံးကြည့်နိုင်ရန် ကုန်သိမ်း၊ အရောင်း၊ ဝါး/ကြိမ်ကုန်ကြမ်း၊ ငွေကြိုယူ၊ အော်ဒါ၊ ကုန်ဖလှယ်မှု၊ အနိမ့်ဆုံးသတိပေးချက် စုံလင်သော နမူနာဒေတာများကို များလည်းမများ နည်းလည်းမနည်း သင့်တင့်မျှတစွာ ထည့်သွင်းပေးပါမည်။
+              </p>
+            </div>
+
+            <div className="space-y-2 pt-1 border-t border-emerald-100">
+              <button
+                type="button"
+                id="settings-load-demo-data-btn"
+                onClick={onLoadDemoData || handleResetDefaults}
+                className="w-full py-2.5 px-3 bg-emerald-700 hover:bg-emerald-600 active:scale-98 text-white font-bold text-xs rounded-xl cursor-pointer transition-all shadow-xs flex items-center justify-center gap-1.5"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>နမူနာဒေတာ ထည့်မည်</span>
+              </button>
+              <button
+                type="button"
+                id="seed-100-suppliers-btn"
+                onClick={handleLoad100Suppliers}
+                className="w-full py-1.5 px-2 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 text-[11px] font-semibold rounded-lg flex items-center justify-center gap-1 cursor-pointer transition-colors"
+              >
+                <Users className="w-3 h-3 text-emerald-600" />
+                <span>ရက်လုပ်သူ ၁၀၀ ဦး စမ်းသပ်ထည့်မည်</span>
+              </button>
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200 gap-2">
-            <div>
-              <span className="font-bold text-xs text-slate-900 block flex items-center gap-1.5">
-                <RefreshCw className="w-3.5 h-3.5 text-emerald-600" />
-                နမူနာဒေတာများ အစုံအလင် ပြန်လည်သွင်းမည် (Load Full Demo Data)
-              </span>
-              <span className="text-[11px] text-slate-500">
-                စနစ်အစမ်းသုံးကြည့်နိုင်ရန် ကုန်သိမ်း၊ အရောင်း၊ ကုန်သည်၊ ရက်လုပ်သူ စုံလင်သော နမူနာဒေတာများ ထည့်ရန်
-              </span>
+          {/* Card 2: Start Real Business (Zero Settings) */}
+          <div className="p-4 rounded-xl border-2 border-amber-300 bg-amber-50/50 flex flex-col justify-between space-y-3 shadow-xs">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-400">
+                  လက်တွေ့ဆိုင်သုံးရန် (Real Business)
+                </span>
+                <Sparkles className="w-4 h-4 text-amber-600 fill-amber-500" />
+              </div>
+              <h4 className="font-extrabold text-sm text-slate-950">
+                ၂။ ဆိုင်စာရင်း အသစ်စတင်မည် (Zero Settings)
+              </h4>
+              <p className="text-[11px] text-slate-700 leading-relaxed">
+                ဆိုင်အမည်၊ ပိုင်ရှင်အမည်၊ ကုန်ပစ္စည်းအမည်များနှင့် မိတ်ဆွေစာရင်းများကို မဖျက်ဘဲ ဆက်လက်ထိန်းသိမ်းထားပြီး ယခင်စမ်းသပ်ထားသော အရောင်း/အဝယ်စာရင်း၊ လက်ကျန်ပစ္စည်း၊ အကြိုငွေနှင့် အကြွေးစာရင်း အားလုံးကို ၀ (သုည) သတ်မှတ်ကာ လက်တွေ့စတင်ရန် ဖြစ်ပါသည်။
+              </p>
             </div>
-            <button
-              type="button"
-              id="settings-load-demo-data-btn"
-              onClick={onLoadDemoData || handleResetDefaults}
-              className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 active:scale-95 text-white font-bold text-xs rounded-lg cursor-pointer transition-colors shrink-0 shadow-xs"
-            >
-              နမူနာဒေတာ ထည့်မည်
-            </button>
+
+            <div className="pt-1 border-t border-amber-200">
+              <button
+                type="button"
+                id="settings-zero-data-btn"
+                onClick={onOpenZeroSettings || handleClearAll}
+                className="w-full py-2.5 px-3 bg-amber-500 hover:bg-amber-400 active:scale-98 text-slate-950 font-black text-xs rounded-xl cursor-pointer transition-all shadow-xs border border-amber-400 flex items-center justify-center gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-slate-950" />
+                <span>ဆိုင်စာရင်းသစ် စတင်မည် (၀ သတ်မှတ်)</span>
+              </button>
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-rose-50 border border-rose-200 gap-2">
-            <div>
-              <span className="font-bold text-xs text-rose-950 block flex items-center gap-1">
-                <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
-                ဒေတာအားလုံး ရှင်းထုတ်မည် (Clear All Data - သုည ပြန်ထားမည်)
-              </span>
-              <span className="text-[11px] text-rose-700">
-                လက်ရှိ စာရင်းအားလုံးကို ဖျက်ပြီး စာရင်းအသစ်စတင်ရန် (Snapshot အရန်သိမ်းပေးပါသည်)
-              </span>
+          {/* Card 3: Factory Reset / Clear All */}
+          <div className="p-4 rounded-xl border-2 border-rose-200 bg-rose-50/40 flex flex-col justify-between space-y-3">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300">
+                  အပြီးတိုင်ဖျက်ရန် (Danger Zone)
+                </span>
+                <Trash2 className="w-4 h-4 text-rose-600" />
+              </div>
+              <h4 className="font-extrabold text-sm text-rose-950">
+                ၃။ ဒေတာအားလုံး ရှင်းထုတ်မည် (Factory Reset)
+              </h4>
+              <p className="text-[11px] text-rose-700 leading-relaxed">
+                ဖုန်းတွင်းရှိ စာရင်းမှတ်တမ်းများ၊ ကုန်ပစ္စည်းစာရင်း၊ ရက်လုပ်သူ/ကုန်သည်များ၊ ဆက်တင်များနှင့် စကားဝှက်များကို အပြီးတိုင် ရှင်းထုတ်ပြီး မူလစတင်စက်ဆင်ခါစကဲ့သို့ အကုန်ရှင်းထုတ်ပါမည်။ (မဖျက်မီ Auto Snapshot အရန်သိမ်းပေးပါသည်)။
+              </p>
             </div>
-            <button
-              type="button"
-              id="settings-clear-all-data-btn"
-              onClick={handleClearAll}
-              className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg cursor-pointer transition-colors shrink-0"
-            >
-              ဒေတာရှင်းထုတ်မည်
-            </button>
+
+            <div className="pt-1 border-t border-rose-100">
+              <button
+                type="button"
+                id="settings-clear-all-data-btn"
+                onClick={handleClearAll}
+                className="w-full py-2.5 px-3 bg-rose-600 hover:bg-rose-500 active:scale-98 text-white font-bold text-xs rounded-xl cursor-pointer transition-all shadow-xs flex items-center justify-center gap-1.5"
+              >
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>ဒေတာအားလုံး အပြီးရှင်းထုတ်မည်</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Guidance Tip Banner */}
+        <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-xl flex items-start gap-2.5 text-xs text-blue-900">
+          <span className="text-base leading-none">💡</span>
+          <div className="leading-relaxed text-[11px]">
+            <strong className="font-bold">အကြံပြုချက် - </strong>
+            ဆိုင်တွင် လက်တွေ့နေ့စဉ်စာရင်း စတင်ရေးသွင်းတော့မည်ဆိုပါက အမှတ် (၂){' '}
+            <span className="font-bold text-amber-800">"ဆိုင်စာရင်း အသစ်စတင်မည် (Zero Settings)"</span> ကို အသုံးပြုပါ။ အကယ်၍ အက်ပ်စနစ်ကို အစမ်းလေ့လာလိုပါက အမှတ် (၁){' '}
+            <span className="font-bold text-emerald-800">"နမူနာဒေတာ သွင်းမည်"</span> ကို အသုံးပြုပါ။
           </div>
         </div>
       </div>
@@ -1982,6 +2186,133 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
                   className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl cursor-pointer shadow-xs"
                 >
                   {editingProduct ? 'ပြင်ဆင်မှု သိမ်းဆည်းမည်' : 'ကုန်ပစ္စည်း စာရင်းသွင်းမည်'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: ADD RAW MATERIAL PRESET ================= */}
+      {isAddPresetOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center">
+                  <Layers className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-slate-900 text-sm">ကုန်ကြမ်းကြိုထုတ် အမျိုးအစားအသစ် ထည့်သွင်းခြင်း</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddPresetOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSavePreset} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">အမျိုးအစား ရွေးချယ်ပါ *</label>
+                <select
+                  value={presetCategory}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setPresetCategory(val);
+                    if (val === 'BAMBOO') {
+                      setPresetUnit('လုံး');
+                      setPresetPrice(3500);
+                    } else if (val === 'RATTAN') {
+                      setPresetUnit('စည်း');
+                      setPresetPrice(12000);
+                    } else if (val === 'CASH_ADVANCE') {
+                      setPresetUnit('ကျပ်');
+                      setPresetPrice(1);
+                      if (!presetName) setPresetName('ငွေကြိုထုတ်');
+                    } else {
+                      setPresetUnit('ခု');
+                      setPresetPrice(5000);
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-amber-500 font-bold text-slate-800"
+                >
+                  <option value="BAMBOO">ဝါးကုန်ကြမ်း (BAMBOO)</option>
+                  <option value="RATTAN">ကြိမ်ကုန်ကြမ်း (RATTAN)</option>
+                  <option value="CASH_ADVANCE">ငွေကြိုယူ (CASH_ADVANCE)</option>
+                  <option value="OTHER">အခြားကုန်ကြမ်း (OTHER)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">ပစ္စည်းအမည် *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder={
+                    presetCategory === 'BAMBOO'
+                      ? 'ဥပမာ - ဝါးပိုးဝါး (အလုံး)'
+                      : presetCategory === 'RATTAN'
+                      ? 'ဥပမာ - ကြိမ်လုံးကြီး'
+                      : presetCategory === 'CASH_ADVANCE'
+                      ? 'ဥပမာ - ငွေကြိုယူ'
+                      : 'ဥပမာ - ကော်ရည် / သံမှို'
+                  }
+                  value={presetName}
+                  onChange={(e) => setPresetName(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-amber-500 font-semibold text-slate-900"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">မူလယူနစ်</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="လုံး / စည်း / ခု"
+                    value={presetUnit}
+                    onChange={(e) => setPresetUnit(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-amber-500 font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">
+                    {presetCategory === 'CASH_ADVANCE' ? 'ပေါက်ဈေး (၁ ကျပ်)' : 'မူလပေါက်ဈေး (ကျပ်)'}
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    required
+                    disabled={presetCategory === 'CASH_ADVANCE'}
+                    value={presetPrice}
+                    onChange={(e) => setPresetPrice(Number(e.target.value))}
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-amber-500 font-mono font-bold ${
+                      presetCategory === 'CASH_ADVANCE' ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <p className="text-[11px] text-slate-500 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+                ဤကုန်ကြမ်းအမည်သည် ရက်လုပ်သူများထံ ကုန်ကြမ်းကြိုထုတ်ပေးသည့် modal drop-down စာရင်းတွင် ချက်ချင်းပေါ်လာမည်ဖြစ်ပါသည်။
+              </p>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddPresetOpen(false)}
+                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl cursor-pointer"
+                >
+                  မလုပ်တော့ပါ
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl cursor-pointer shadow-xs"
+                >
+                  ကုန်ကြမ်း ထည့်သွင်းမည်
                 </button>
               </div>
             </form>
