@@ -63,7 +63,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
     setDefaultPrice(0);
     setDefaultWholesalePrice(0);
     setUnit('ထည်');
-    setOpeningStock(50);
+    setOpeningStock(0);
     setMinStockAlert(15);
     setIsModalOpen(true);
   };
@@ -247,9 +247,15 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-slate-500">
-                <span>ယူနစ်: <strong className="text-slate-700">{product.unit}</strong></span>
-                <span>စတင်ချိန်လက်ကျန်: <strong className="text-slate-700">{product.openingStock || 0} {product.unit}</strong></span>
+              <div className="flex flex-col gap-1 text-xs text-slate-500 pt-1 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <span>ယူနစ်: <strong className="text-slate-700">{product.unit}</strong></span>
+                  <span>စတင်လက်ကျန်: <strong className="text-slate-700">{product.openingStock || 0} {product.unit}</strong></span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-amber-800 bg-amber-50 px-2 py-1 rounded">
+                  <span>အနည်းဆုံးရှိရမည့်လက်ကျန်:</span>
+                  <strong className="font-bold">{product.minStockAlert || 15} {product.unit}</strong>
+                </div>
               </div>
             </div>
           </div>

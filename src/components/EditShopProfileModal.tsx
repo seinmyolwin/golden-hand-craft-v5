@@ -16,6 +16,7 @@ export const EditShopProfileModal: React.FC<EditShopProfileModalProps> = ({
   onSave,
 }) => {
   const [shopName, setShopName] = useState(shopSettings.shopName || 'ရွှေလက်ရာ');
+  const [ownerName, setOwnerName] = useState(shopSettings.ownerName || '');
   const [tagline, setTagline] = useState(shopSettings.tagline || 'မြန်မာ့လက်မှု ယွန်းထည်နှင့် ဝါးနှီးလုပ်ငန်း');
   const [phone, setPhone] = useState(shopSettings.phone || '09-123456789');
   const [address, setAddress] = useState(shopSettings.address || 'ပုဂံမြို့ဟောင်း၊ မန္တလေးတိုင်း');
@@ -27,6 +28,7 @@ export const EditShopProfileModal: React.FC<EditShopProfileModalProps> = ({
     onSave({
       ...shopSettings,
       shopName: shopName.trim(),
+      ownerName: ownerName.trim(),
       tagline: tagline.trim(),
       phone: phone.trim(),
       address: address.trim(),
@@ -40,7 +42,7 @@ export const EditShopProfileModal: React.FC<EditShopProfileModalProps> = ({
         <div className="px-4 py-3 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Store className="w-5 h-5 text-amber-400" />
-            <h3 className="text-sm font-bold">ဆိုင်အချက်အလက် ပြင်ဆင်ခြင်း</h3>
+            <h3 className="text-sm font-bold">ဆိုင်ရှင်နှင့် ဆိုင်အချက်အလက် ပြင်ဆင်ခြင်း</h3>
           </div>
           <button
             type="button"
@@ -60,6 +62,17 @@ export const EditShopProfileModal: React.FC<EditShopProfileModalProps> = ({
               onChange={(e) => setShopName(e.target.value)}
               className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-sm"
               required
+            />
+          </div>
+
+          <div>
+            <label className="block text-slate-700 font-bold mb-1">ပိုင်ရှင်အမည် (ဆိုင်ရှင်)</label>
+            <input
+              type="text"
+              placeholder="ဥပမာ - ဦးရွှေမောင် / ဒေါ်မြသန်း"
+              value={ownerName}
+              onChange={(e) => setOwnerName(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-sm text-slate-900"
             />
           </div>
 

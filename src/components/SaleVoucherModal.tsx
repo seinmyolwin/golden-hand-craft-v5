@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { SaleRecord, ShopSettings } from '../types';
 import { formatMMK, formatNumberOnly } from '../utils/storage';
-import { X, Printer, Truck } from 'lucide-react';
+import { X, Printer, Truck, Phone } from 'lucide-react';
 import { Logo } from './Logo';
 
 interface SaleVoucherModalProps {
@@ -92,6 +92,27 @@ export const SaleVoucherModal: React.FC<SaleVoucherModalProps> = ({
               <strong className="text-slate-800">{sale.merchantTown}</strong>
             </div>
           </div>
+
+          {/* Transport & Delivery Vehicle Contact Box */}
+          {(sale.deliveryVehicle || sale.driverOrContact || sale.driverPhone) && (
+            <div className="p-2 bg-blue-50/70 border border-blue-200 rounded-lg text-[11px] space-y-1">
+              {sale.deliveryVehicle && (
+                <div className="flex items-center gap-1.5 text-blue-950 font-medium">
+                  <Truck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                  <span>တင်ပေးလိုက်သည့်ကား/ဂိတ်: <strong>{sale.deliveryVehicle}</strong></span>
+                </div>
+              )}
+              {(sale.driverOrContact || sale.driverPhone) && (
+                <div className="flex items-center gap-1.5 text-blue-950 font-medium">
+                  <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>
+                    ယာဉ်မောင်း/ဆက်သွယ်ရန်: <strong>{sale.driverOrContact || ''}</strong>
+                    {sale.driverPhone && <span className="ml-1 font-mono text-emerald-800">({sale.driverPhone})</span>}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Items Table */}
           <div>

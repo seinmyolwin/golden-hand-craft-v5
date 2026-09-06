@@ -191,7 +191,7 @@ export function getStoredSuppliers(): Supplier[] {
       return INITIAL_SUPPLIERS;
     }
     const parsed = JSON.parse(data);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_SUPPLIERS;
+    return Array.isArray(parsed) ? parsed : INITIAL_SUPPLIERS;
   } catch (e) {
     console.error('Error reading suppliers', e);
     return INITIAL_SUPPLIERS;
@@ -237,7 +237,7 @@ export function getStoredMerchants(): Merchant[] {
       return INITIAL_MERCHANTS;
     }
     const parsed = JSON.parse(data);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_MERCHANTS;
+    return Array.isArray(parsed) ? parsed : INITIAL_MERCHANTS;
   } catch (e) {
     console.error('Error reading merchants', e);
     return INITIAL_MERCHANTS;
@@ -446,7 +446,7 @@ export function getStoredMerchantOrders(): MerchantOrder[] {
       return INITIAL_MERCHANT_ORDERS;
     }
     const parsed = JSON.parse(data);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_MERCHANT_ORDERS;
+    return Array.isArray(parsed) ? parsed : INITIAL_MERCHANT_ORDERS;
   } catch (e) {
     console.error('Error reading merchant orders', e);
     return INITIAL_MERCHANT_ORDERS;
@@ -974,10 +974,12 @@ export function exportBackupJSON(
     merchants,
     sales,
     stockAdjustments,
+    orders: loadOrders(),
+    peerTrades: loadPeerTrades(),
   };
 
   const safeShopName = (currentShop.shopName || 'Handicraft').replace(/[^a-zA-Z0-9_\u1000-\u109F]/g, '_');
-  const fileName = customFileName || `${safeShopName}_Full_Backup_${getTodayDateString()}.json`;
+  const fileName = customFileName || `Shwe_let_yar_doc_${safeShopName}_Backup_${getTodayDateString()}.json`;
   const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json;charset=utf-8;' });
 
   if (useLocationPicker) {
@@ -1565,7 +1567,7 @@ export function exportAllDataJSON(): void {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `shwe-let-yar-backup-${getTodayDateString()}.json`;
+    a.download = `Shwe_let_yar_doc_backup_${getTodayDateString()}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();

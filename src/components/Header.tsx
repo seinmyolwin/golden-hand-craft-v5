@@ -14,6 +14,9 @@ import {
   Lock,
   ShoppingBag,
   Bell,
+  BookOpen,
+  Sparkles,
+  AlertTriangle,
 } from 'lucide-react';
 import { ShopSettings } from '../types';
 import { Logo } from './Logo';
@@ -46,6 +49,10 @@ interface HeaderProps {
   onNavigateToOrders?: () => void;
   onOpenOrderNotification?: () => void;
   pendingOrdersCount?: number;
+  onOpenUserGuide?: () => void;
+  onOpenZeroSettings?: () => void;
+  lowStockCount?: number;
+  onOpenLowStockAlert?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -76,6 +83,10 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigateToOrders,
   onOpenOrderNotification,
   pendingOrdersCount = 0,
+  onOpenUserGuide,
+  onOpenZeroSettings,
+  lowStockCount = 0,
+  onOpenLowStockAlert,
 }) => {
   const handleOpenEntry = onOpenNewEntry || onOpenNewSupplierCollection;
   const handleOpenSale = onOpenNewSale || onOpenNewMerchantSale;
@@ -116,9 +127,14 @@ export const Header: React.FC<HeaderProps> = ({
                   type="button"
                   onClick={handleEditProfile}
                   className="text-base sm:text-lg font-bold text-white tracking-tight truncate hover:text-emerald-100 flex items-center gap-1.5 cursor-pointer text-left group"
-                  title="ဆိုင်အမည် ပြင်ဆင်မည်"
+                  title="ဆိုင်အမည်နှင့် ပိုင်ရှင် ပြင်ဆင်မည်"
                 >
                   <span>{shopName}</span>
+                  {shopSettings?.ownerName && (
+                    <span className="text-xs text-amber-200 font-medium bg-emerald-900/70 px-1.5 py-0.5 rounded border border-emerald-500/40">
+                      ({shopSettings.ownerName})
+                    </span>
+                  )}
                   <Edit3 className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 text-emerald-200 transition-opacity shrink-0" />
                 </button>
                 {isOnline ? (
@@ -190,6 +206,20 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
+            {/* Low Stock Alert Button */}
+            {lowStockCount > 0 && onOpenLowStockAlert && (
+              <button
+                id="header-low-stock-alert-btn"
+                type="button"
+                onClick={onOpenLowStockAlert}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-black bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md ring-2 ring-amber-300/80 animate-bounce cursor-pointer transition-all"
+                title={`ကုန်ပစ္စည်း (${lowStockCount}) မျိုး အနည်းဆုံးလက်ကျန်ထက် လျော့နည်းနေပါသည်!`}
+              >
+                <AlertTriangle className="w-3.5 h-3.5 text-red-600 stroke-[3]" />
+                <span className="whitespace-nowrap">ပစ္စည်းလို ({lowStockCount})</span>
+              </button>
+            )}
+
             {/* Notification Bell for Pending Orders */}
             <button
               id="header-orders-notification-bell-btn"
@@ -213,6 +243,34 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               )}
             </button>
+
+            {/* Start App / Zero Settings Button */}
+            {onOpenZeroSettings && (
+              <button
+                id="header-zero-start-btn"
+                type="button"
+                onClick={onOpenZeroSettings}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-black bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 shadow-xs border border-amber-300 cursor-pointer transition-all"
+                title="အက်ပ်ကို လက်တွေ့ စတင်အသုံးပြုမည် (လက်ကျန်အားလုံး 0 သုည သတ်မှတ်ချက်)"
+              >
+                <Sparkles className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
+                <span className="whitespace-nowrap">စတင်အသုံးပြုမည်</span>
+              </button>
+            )}
+
+            {/* User Guide Button */}
+            {onOpenUserGuide && (
+              <button
+                id="header-guide-btn"
+                type="button"
+                onClick={onOpenUserGuide}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-800/90 hover:bg-emerald-700 text-emerald-100 border border-emerald-400/50 shadow-xs cursor-pointer transition-all"
+                title="အက်ပ်အသုံးပြုနည်း လမ်းညွှန် ဖတ်ရှုမည်"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-emerald-300" />
+                <span className="hidden sm:inline whitespace-nowrap">လမ်းညွှန်</span>
+              </button>
+            )}
 
             {/* WiFi / Hotspot Sync Button */}
             {handleSync && (

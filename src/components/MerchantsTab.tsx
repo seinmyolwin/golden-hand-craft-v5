@@ -12,6 +12,7 @@ import {
   Search,
   Plus,
   Phone,
+  User,
   DollarSign,
   History,
   Download,
@@ -62,6 +63,7 @@ export const MerchantsTab: React.FC<MerchantsTabProps> = ({
   const [name, setName] = useState<string>('');
   const [town, setTown] = useState<string>('မန္တလေး');
   const [phone, setPhone] = useState<string>('');
+  const [ownerOrContact, setOwnerOrContact] = useState<string>('');
   const [address, setAddress] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
 
@@ -115,6 +117,7 @@ export const MerchantsTab: React.FC<MerchantsTabProps> = ({
     setName(m.name);
     setTown(m.town);
     setPhone(m.phone || '');
+    setOwnerOrContact(m.ownerOrContact || '');
     setAddress(m.address || '');
     setNotes(m.notes || '');
     setIsAddModalOpen(true);
@@ -125,6 +128,7 @@ export const MerchantsTab: React.FC<MerchantsTabProps> = ({
     setName('');
     setTown('မန္တလေး');
     setPhone('');
+    setOwnerOrContact('');
     setAddress('');
     setNotes('');
     setIsAddModalOpen(true);
@@ -140,6 +144,7 @@ export const MerchantsTab: React.FC<MerchantsTabProps> = ({
         name: name.trim(),
         town: town.trim() || 'မန္တလေး',
         phone: phone.trim() || '-',
+        ownerOrContact: ownerOrContact.trim(),
         address: address.trim(),
         notes: notes.trim(),
         updatedAt: getTodayDateString(),
@@ -152,6 +157,7 @@ export const MerchantsTab: React.FC<MerchantsTabProps> = ({
         name: name.trim(),
         town: town.trim() || 'မန္တလေး',
         phone: phone.trim() || '-',
+        ownerOrContact: ownerOrContact.trim(),
         address: address.trim(),
         notes: notes.trim(),
         currentReceivableBalance: 0,
@@ -429,8 +435,14 @@ export const MerchantsTab: React.FC<MerchantsTabProps> = ({
                 </div>
 
                 <div className="text-xs text-slate-600 space-y-1 mb-2.5">
+                  {merchant.ownerOrContact && (
+                    <div className="flex items-center gap-1.5 text-blue-900 font-semibold">
+                      <User className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                      <span>ဆက်သွယ်ရန်: {merchant.ownerOrContact}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-slate-400" />
+                    <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <span>{merchant.phone || '-'}</span>
                   </div>
                   {merchant.address && (
@@ -541,6 +553,18 @@ export const MerchantsTab: React.FC<MerchantsTabProps> = ({
                   onChange={(e) => setName(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
+                />
+              </div>
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">
+                  ပိုင်ရှင် သို့မဟုတ် ဆက်သွယ်ရမည့်သူ
+                </label>
+                <input
+                  type="text"
+                  placeholder="ဥပမာ - ဒေါ်နွယ်နွယ်ဝင်း (ဆိုင်ပိုင်ရှင်)"
+                  value={ownerOrContact}
+                  onChange={(e) => setOwnerOrContact(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">

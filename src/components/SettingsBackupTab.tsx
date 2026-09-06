@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import {
   Supplier,
   Product,
@@ -24,6 +24,10 @@ import {
   regenerateRecoveryKey,
   resetAppLockPinWithRecoveryKey,
   DEFAULT_APP_LOCK,
+  formatMMK,
+  formatNumberOnly,
+  getTodayDateString,
+  getCurrentTimeString,
 } from '../utils/storage';
 import { Logo } from './Logo';
 import {
@@ -58,6 +62,13 @@ import {
   Eye,
   EyeOff,
   ShieldAlert,
+  Plus,
+  Search,
+  X,
+  Tag,
+  SlidersHorizontal,
+  BookOpen,
+  Sparkles,
 } from 'lucide-react';
 import {
   DEFAULT_PRODUCTS,
@@ -99,6 +110,14 @@ interface SettingsBackupTabProps {
     stockAdjustments?: StockAdjustmentRecord[],
     shopSettings?: ShopSettings
   ) => void;
+  onAddSupplier?: (supplier: Supplier) => void;
+  onAddMerchant?: (merchant: Merchant) => void;
+  onAddProduct?: (product: Product) => void;
+  onUpdateProduct?: (product: Product) => void;
+  onDeleteProduct?: (productId: string) => void;
+  onOpenUserGuide?: () => void;
+  onOpenZeroSettings?: () => void;
+  onLoadDemoData?: () => void;
 }
 
 export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
@@ -125,6 +144,14 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
   onOpenSyncModal,
   onOpenZapyaModal,
   onRestoreData,
+  onAddSupplier,
+  onAddMerchant,
+  onAddProduct,
+  onUpdateProduct,
+  onDeleteProduct,
+  onOpenUserGuide,
+  onOpenZeroSettings,
+  onLoadDemoData,
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [editingPin, setEditingPin] = useState(false);
@@ -140,6 +167,39 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
   const [resetConfirmPin, setResetConfirmPin] = useState<string>('');
   const [resetError, setResetError] = useState<string>('');
   const [resetSuccess, setResetSuccess] = useState<string>('');
+
+  // Entity Management State (Settings Tab)
+  const [productSearch, setProductSearch] = useState<string>('');
+  const [productCategoryFilter, setProductCategoryFilter] = useState<string>('all');
+  const [isAddSupOpen, setIsAddSupOpen] = useState<boolean>(false);
+  const [isAddMerchOpen, setIsAddMerchOpen] = useState<boolean>(false);
+  const [isProductModalOpen, setIsProductModalOpen] = useState<boolean>(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  // Supplier Form State
+  const [supName, setSupName] = useState<string>('');
+  const [supVillage, setSupVillage] = useState<string>('မင်းနန်သူ');
+  const [supPhone, setSupPhone] = useState<string>('');
+  const [supNotes, setSupNotes] = useState<string>('');
+
+  // Merchant Form State
+  const [merchName, setMerchName] = useState<string>('');
+  const [merchTown, setMerchTown] = useState<string>('မန္တလေး');
+  const [merchPhone, setMerchPhone] = useState<string>('');
+  const [merchAddress, setMerchAddress] = useState<string>('');
+  const [merchNotes, setMerchNotes] = useState<string>('');
+
+  // Product Form State
+  const [prodName, setProdName] = useState<string>('');
+  const [prodCategory, setProdCategory] = useState<string>('ယွန်းထည်');
+  const [prodBuyPrice, setProdBuyPrice] = useState<number>(3000);
+  const [prodWholesalePrice, setProdWholesalePrice] = useState<number>(4000);
+  const [prodUnit, setProdUnit] = useState<string>('ထည်');
+  const [prodOpeningStock, setProdOpeningStock] = useState<number>(0);
+  const [prodMinStock, setProdMinStock] = useState<number>(10);
+
+  // Download Notification State
+  const [downloadSuccessMsg, setDownloadSuccessMsg] = useState<string>('');
 
   const currentRecoveryKey =
     appLockSettings?.recoveryKey || DEFAULT_APP_LOCK.recoveryKey || 'SLY-8842-9173';
@@ -274,6 +334,169 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
 
   const inventoryStock = computeAllProductsStock(products || [], transactions || [], sales || [], stockAdjustments || []);
 
+  const filteredProductsForSetting = useMemo(() => {
+    return (products || []).filter((p) => {
+      if (!p) return false;
+      const matchesSearch =
+        (p.name || '').toLowerCase().includes(productSearch.toLowerCase()) ||
+        (p.category || '').toLowerCase().includes(productSearch.toLowerCase());
+      const matchesCat = productCategoryFilter === 'all' || p.category === productCategoryFilter;
+      return matchesSearch && matchesCat;
+    });
+  }, [products, productSearch, productCategoryFilter]);
+
+  const handleSaveSupplierFromSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supName.trim()) {
+      alert('ရက်လုပ်သူ အမည် ထည့်သွင်းပေးပါ');
+      return;
+    }
+    const newSup: Supplier = {
+      id: `sup-${Date.now()}`,
+      code: `SUP-${String((suppliers || []).length + 1).padStart(3, '0')}`,
+      name: supName.trim(),
+      village: supVillage.trim() || 'မင်းနန်သူ',
+      phone: supPhone.trim() || '-',
+      notes: supNotes.trim(),
+      initialAdvance: 0,
+      currentAdvanceBalance: 0,
+      totalGoodsValueDelivered: 0,
+      totalAdvanceGiven: 0,
+      totalMaterialCreditGiven: 0,
+      totalRepaymentReceived: 0,
+      createdAt: getTodayDateString(),
+      updatedAt: getTodayDateString(),
+    };
+    if (onAddSupplier) {
+      onAddSupplier(newSup);
+      alert(`ရက်လုပ်သူ "${newSup.name}" ကို အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ`);
+    }
+    setIsAddSupOpen(false);
+    setSupName('');
+    setSupPhone('');
+    setSupNotes('');
+  };
+
+  const handleSaveMerchantFromSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!merchName.trim()) {
+      alert('ကုန်သည် အမည် ထည့်သွင်းပေးပါ');
+      return;
+    }
+    const newMerch: Merchant = {
+      id: `m-${Date.now()}`,
+      code: `M-${String((merchants || []).length + 1).padStart(3, '0')}`,
+      name: merchName.trim(),
+      town: merchTown.trim() || 'မန္တလေး',
+      phone: merchPhone.trim() || '-',
+      address: merchAddress.trim(),
+      notes: merchNotes.trim(),
+      currentReceivableBalance: 0,
+      totalPurchasesValue: 0,
+      totalPaidAmount: 0,
+      createdAt: getTodayDateString(),
+      updatedAt: getTodayDateString(),
+    };
+    if (onAddMerchant) {
+      onAddMerchant(newMerch);
+      alert(`ကုန်သည် "${newMerch.name}" ကို အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ`);
+    }
+    setIsAddMerchOpen(false);
+    setMerchName('');
+    setMerchPhone('');
+    setMerchAddress('');
+    setMerchNotes('');
+  };
+
+  const handleOpenEditProduct = (prod: Product) => {
+    setEditingProduct(prod);
+    setProdName(prod.name);
+    setProdCategory(prod.category || 'ယွန်းထည်');
+    setProdBuyPrice(prod.defaultPrice || 0);
+    setProdWholesalePrice(prod.defaultWholesalePrice || prod.defaultPrice || 0);
+    setProdUnit(prod.unit || 'ထည်');
+    setProdOpeningStock(prod.openingStock || 0);
+    setProdMinStock(prod.minStockAlert || 10);
+    setIsProductModalOpen(true);
+  };
+
+  const handleOpenAddProduct = () => {
+    setEditingProduct(null);
+    setProdName('');
+    setProdCategory('ယွန်းထည်');
+    setProdBuyPrice(3000);
+    setProdWholesalePrice(4000);
+    setProdUnit('ထည်');
+    setProdOpeningStock(0);
+    setProdMinStock(10);
+    setIsProductModalOpen(true);
+  };
+
+  const handleSaveProductFromSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prodName.trim()) {
+      alert('ကုန်ပစ္စည်း အမည် ထည့်သွင်းပေးပါ');
+      return;
+    }
+    if (editingProduct) {
+      const updated: Product = {
+        ...editingProduct,
+        name: prodName.trim(),
+        category: prodCategory.trim(),
+        defaultPrice: Number(prodBuyPrice) || 0,
+        defaultWholesalePrice: Number(prodWholesalePrice) || 0,
+        unit: prodUnit.trim() || 'ထည်',
+        openingStock: Number(prodOpeningStock) || 0,
+        minStockAlert: Number(prodMinStock) || 0,
+      };
+      if (onUpdateProduct) {
+        onUpdateProduct(updated);
+        alert(`ကုန်ပစ္စည်း "${updated.name}" ကို အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ`);
+      }
+    } else {
+      const newProd: Product = {
+        id: `p-${Date.now()}`,
+        name: prodName.trim(),
+        category: prodCategory.trim(),
+        defaultPrice: Number(prodBuyPrice) || 0,
+        defaultWholesalePrice: Number(prodWholesalePrice) || 0,
+        unit: prodUnit.trim() || 'ထည်',
+        openingStock: Number(prodOpeningStock) || 0,
+        currentStock: Number(prodOpeningStock) || 0,
+        minStockAlert: Number(prodMinStock) || 10,
+        active: true,
+      };
+      if (onAddProduct) {
+        onAddProduct(newProd);
+        alert(`ကုန်ပစ္စည်းသစ် "${newProd.name}" ကို အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ`);
+      }
+    }
+    setIsProductModalOpen(false);
+    setEditingProduct(null);
+  };
+
+  const handleShweLetYarDocBackup = async (useFolderPicker: boolean = false) => {
+    const todayStr = getTodayDateString();
+    const fileName = `Shwe_let_yar_doc_backup_${todayStr}.json`;
+    const res = await exportBackupJSON(
+      products,
+      suppliers,
+      transactions,
+      merchants,
+      sales,
+      stockAdjustments,
+      shopSettings,
+      fileName,
+      useFolderPicker
+    );
+    if (res.success) {
+      setDownloadSuccessMsg(
+        `ဖိုင်အမည် "${res.fileName}" ကို အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။ ဖုန်းအတွင်း Download > "Shwe let yar doc." Folder ထဲသို့ ရွှေ့ပြောင်းသိမ်းဆည်းနိုင်ပါသည်။`
+      );
+      setTimeout(() => setDownloadSuccessMsg(''), 8000);
+    }
+  };
+
   return (
     <div className="space-y-4 pb-20">
       {/* Header */}
@@ -287,6 +510,57 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
         <p className="text-xs text-slate-400">
           ဒေတာများ အရန်သိမ်းဆည်းခြင်း၊ အော့ဖ်လိုင်းအသုံးပြုမှု၊ Password Key Reset နှင့် လုံခြုံရေးထိန်းချုပ်ခြင်း
         </p>
+      </div>
+
+      {/* User Guide and Zero Setup Quick Action Card */}
+      <div className="bg-gradient-to-r from-emerald-800 to-emerald-950 rounded-xl p-4 sm:p-5 text-white shadow-md border border-emerald-700/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start gap-3.5">
+          <div className="w-12 h-12 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-black shrink-0 shadow-sm">
+            <BookOpen className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2 py-0.5 rounded">
+                လမ်းညွှန်နှင့် စတင်အသုံးပြုပုံ
+              </span>
+              <span className="text-[10px] text-emerald-200 bg-emerald-800/80 px-2 py-0.5 rounded border border-emerald-600/50">
+                မြန်မာလို အပြည့်အစုံ
+              </span>
+            </div>
+            <h3 className="text-base font-extrabold text-white mt-1">
+              အက်ပ်အသုံးပြုနည်း လမ်းညွှန်နှင့် စတင်အသုံးပြုခြင်း
+            </h3>
+            <p className="text-xs text-emerald-100/80 mt-0.5 leading-relaxed">
+              ကုန်သိမ်း၊ အရောင်း၊ ကုန်လက်ကျန် သတိပေးချက်၊ အော်ဒါ၊ ဆိုင်ချင်းဖလှယ်မှု၊ အော့ဖ်လိုင်း Backup နှင့် အက်ပ်စတင်အသုံးပြုရန် (Zero Setting) နည်းလမ်းများ
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap shrink-0">
+          {onOpenZeroSettings && (
+            <button
+              id="settings-zero-start-btn"
+              type="button"
+              onClick={onOpenZeroSettings}
+              className="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-black text-xs shadow-sm flex items-center gap-1.5 cursor-pointer transition-all border border-amber-300"
+            >
+              <Sparkles className="w-4 h-4 fill-slate-950 text-slate-950" />
+              <span>စတင်အသုံးပြုမည် (Zero)</span>
+            </button>
+          )}
+
+          {onOpenUserGuide && (
+            <button
+              id="settings-open-user-guide-btn"
+              type="button"
+              onClick={onOpenUserGuide}
+              className="px-3.5 py-2 rounded-xl bg-white hover:bg-emerald-50 active:scale-95 text-emerald-900 font-extrabold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer transition-all"
+            >
+              <BookOpen className="w-4 h-4 text-emerald-700" />
+              <span>လမ်းညွှန်စာအုပ် ဖွင့်ဖတ်မည်</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Business Profile Management Card */}
@@ -344,6 +618,240 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
             )}
           </div>
         )}
+      </div>
+
+      {/* ================= MASTER MANAGEMENT (ENTITIES & PRODUCTS) ================= */}
+      <div className="bg-white rounded-xl p-4 sm:p-5 border border-emerald-200 shadow-2xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200">
+              <Store className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm sm:text-base text-slate-900">
+                အဓိက အချက်အလက်နှင့် ကုန်ပစ္စည်း စီမံခန့်ခွဲမှု (Entity & Products Master)
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                ရက်လုပ်သူအသစ်၊ ကုန်သည်အသစ်၊ ကုန်ပစ္စည်းအသစ် ထည့်သွင်းခြင်းနှင့် ကုန်ပစ္စည်းစာရင်း စိတ်ကြိုက် ပြင်ဆင်/ဖျက်/ထည့်ခြင်း
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Add Action Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Add Supplier */}
+          <div className="p-3.5 bg-emerald-50/60 hover:bg-emerald-50 border border-emerald-200 rounded-xl space-y-2 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-emerald-700" />
+                <span className="font-bold text-xs text-emerald-950">ရက်လုပ်သူ အသစ်ထည့်ရန်</span>
+              </div>
+              <span className="text-[11px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-200">
+                စုစုပေါင်း {suppliers.length} ဦး
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-600">
+              ယွန်းထည်/လက်မှု ရက်လုပ်သူအသစ်များ၏ အမည်၊ ရွာ၊ ဖုန်းနံပါတ် သတ်မှတ်ချက်များ
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSupName('');
+                setSupVillage('မင်းနန်သူ');
+                setSupPhone('');
+                setSupNotes('');
+                setIsAddSupOpen(true);
+              }}
+              className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>+ ရက်လုပ်သူ အသစ်ထည့်မည်</span>
+            </button>
+          </div>
+
+          {/* Add Merchant */}
+          <div className="p-3.5 bg-blue-50/60 hover:bg-blue-50 border border-blue-200 rounded-xl space-y-2 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-blue-700" />
+                <span className="font-bold text-xs text-blue-950">ကုန်သည် အသစ်ထည့်ရန်</span>
+              </div>
+              <span className="text-[11px] font-bold text-blue-700 bg-white px-2 py-0.5 rounded-full border border-blue-200">
+                စုစုပေါင်း {merchants.length} ဦး
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-600">
+              လက်ကားဝယ်ယူသူ ကုန်သည်အသစ်များ၏ အမည်၊ မြို့၊ ဖုန်းနံပါတ်၊ ဆိုင်လိပ်စာများ
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setMerchName('');
+                setMerchTown('မန္တလေး');
+                setMerchPhone('');
+                setMerchAddress('');
+                setMerchNotes('');
+                setIsAddMerchOpen(true);
+              }}
+              className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>+ ကုန်သည် အသစ်ထည့်မည်</span>
+            </button>
+          </div>
+
+          {/* Add Product */}
+          <div className="p-3.5 bg-purple-50/60 hover:bg-purple-50 border border-purple-200 rounded-xl space-y-2 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Package className="w-4 h-4 text-purple-700" />
+                <span className="font-bold text-xs text-purple-950">ကုန်ပစ္စည်း အသစ်ထည့်ရန်</span>
+              </div>
+              <span className="text-[11px] font-bold text-purple-700 bg-white px-2 py-0.5 rounded-full border border-purple-200">
+                စုစုပေါင်း {products.length} မျိုး
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-600">
+              ပစ္စည်းအသစ်၏ အမည်၊ အမျိုးအစား၊ ဝယ်စျေး၊ လက်ကားစျေး၊ အနိမ့်ဆုံးသတိပေးလက်ကျန်
+            </p>
+            <button
+              type="button"
+              onClick={handleOpenAddProduct}
+              className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>+ ကုန်ပစ္စည်း အသစ်ထည့်မည်</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Product Management Section */}
+        <div className="border-t border-slate-100 pt-4 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div>
+              <h4 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-1.5">
+                <SlidersHorizontal className="w-4 h-4 text-emerald-600" />
+                <span>ကုန်ပစ္စည်းစာရင်း စိတ်ကြိုက် ပြင်ဆင်/ဖျက်ခြင်း (Product Master)</span>
+              </h4>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                ကုန်ပစ္စည်းတစ်ခုချင်းစီ၏ အမည်၊ စျေးနှုန်း၊ အမျိုးအစားများကို ပြင်ဆင်နိုင်သည်
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleOpenAddProduct}
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-2xs self-start sm:self-auto"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>ပစ္စည်းသစ်ထည့်မည်</span>
+            </button>
+          </div>
+
+          {/* Search and Category Filter Bar */}
+          <div className="flex flex-col sm:flex-row items-center gap-2">
+            <div className="relative flex-1 w-full">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                placeholder="ကုန်ပစ္စည်း အမည် သို့မဟုတ် အမျိုးအစား ရှာဖွေပါ..."
+                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-500"
+              />
+              {productSearch && (
+                <button
+                  type="button"
+                  onClick={() => setProductSearch('')}
+                  className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
+              <select
+                value={productCategoryFilter}
+                onChange={(e) => setProductCategoryFilter(e.target.value)}
+                className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 cursor-pointer w-full sm:w-auto"
+              >
+                <option value="all">အမျိုးအစား အားလုံး</option>
+                {Array.from(new Set(products.map((p) => p.category || 'အထွေထွေ'))).map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Product Items Table / Cards */}
+          <div className="max-h-72 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100">
+            {filteredProductsForSetting.length === 0 ? (
+              <div className="p-6 text-center text-xs text-slate-400">
+                ရှာဖွေမှုနှင့် ကိုက်ညီသော ကုန်ပစ္စည်း မရှိပါ
+              </div>
+            ) : (
+              filteredProductsForSetting.map((prod) => {
+                const stock = inventoryStock[prod.id]?.currentStock ?? prod.currentStock ?? 0;
+                return (
+                  <div
+                    key={prod.id}
+                    className="p-3 hover:bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 transition-colors text-xs"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900">{prod.name}</span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                          {prod.category}
+                        </span>
+                        {stock <= (prod.minStockAlert || 10) && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                            လက်ကျန်နည်း
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                        <span>ဝယ်စျေး: <strong className="text-slate-800">{formatMMK(prod.defaultPrice || 0)}</strong></span>
+                        <span>•</span>
+                        <span>လက်ကားစျေး: <strong className="text-emerald-700">{formatMMK(prod.defaultWholesalePrice || prod.defaultPrice || 0)}</strong></span>
+                        <span>•</span>
+                        <span>လက်ကျန်: <strong className="text-slate-800">{formatNumberOnly(stock)} {prod.unit || 'ထည်'}</strong></span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditProduct(prod)}
+                        className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold rounded-lg text-xs flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                      >
+                        <Edit3 className="w-3 h-3 text-slate-500" />
+                        <span>ပြင်မည်</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`"${prod.name}" ကုန်ပစ္စည်းကို ဖျက်ရန် သေချာပါသလား?`)) {
+                            if (onDeleteProduct) {
+                              onDeleteProduct(prod.id);
+                            }
+                          }
+                        }}
+                        className="px-2 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-semibold rounded-lg text-xs flex items-center gap-1 cursor-pointer transition-colors"
+                        title="ဖျက်မည်"
+                      >
+                        <Trash2 className="w-3 h-3 text-rose-500" />
+                        <span>ဖျက်</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
       </div>
 
       {/* ================= APP LOCK & PASSWORD KEY RESET CARD ================= */}
@@ -913,31 +1421,71 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
 
       {/* Data Backup & Restore Cards */}
       <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-2xs space-y-4">
-        <h3 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-1.5">
-          <Smartphone className="w-4 h-4 text-emerald-600" />
-          <span>ဒေတာ အရန်သိမ်းခြင်းနှင့် ပြန်လည်သွင်းယူခြင်း (Backup & Restore)</span>
-        </h3>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <h3 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-1.5">
+            <Smartphone className="w-4 h-4 text-emerald-600" />
+            <span>ဒေတာ အရန်သိမ်းခြင်းနှင့် ပြန်လည်သွင်းယူခြင်း (Backup & Restore)</span>
+          </h3>
+          <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+            ဖိုင်တွဲညွှန်းဆိုမှု: Shwe let yar doc.
+          </span>
+        </div>
+
+        {downloadSuccessMsg && (
+          <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in duration-200">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{downloadSuccessMsg}</span>
+          </div>
+        )}
+
+        <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl text-[11px] text-amber-900 flex items-start gap-2">
+          <FolderOpen className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <span className="font-bold block text-amber-950">
+              ဖုန်းအတွင်း သိမ်းဆည်းရန် လမ်းညွှန်ချက် (Shwe let yar doc. Folder):
+            </span>
+            <p className="text-slate-700 leading-relaxed">
+              ဖုန်း၏ File Manager (သို့မဟုတ်) Files App ရှိ <strong>Download</strong> ဖိုင်တွဲအတွင်း{' '}
+              <strong className="text-amber-900 font-mono bg-white px-1.5 py-0.5 rounded border border-amber-300">
+                Shwe let yar doc.
+              </strong>{' '}
+              ဟူသော folder တစ်ခု ဆောက်ထားပြီး အဆိုပါ folder ထဲသို့ Backup ဖိုင်များ သိမ်းဆည်းနိုင်ပါသည်။
+              ဖိုင်အမည်များကို <strong>Shwe_let_yar_doc_backup_[ရက်စွဲ].json</strong> ဖြင့် အလိုအလျောက် သတ်မှတ်ပေးထားပါသည်။
+            </p>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="p-3.5 rounded-xl border-2 border-blue-200 bg-blue-50/50 space-y-2 flex flex-col justify-between">
+          <div className="p-3.5 rounded-xl border-2 border-emerald-300 bg-emerald-50/40 space-y-2 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
                 <span className="font-bold text-xs text-slate-900">အပြည့်အစုံ Backup ထုတ်ယူမည်</span>
-                <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-semibold">အကြံပြုချက်</span>
+                <span className="text-[10px] bg-emerald-700 text-white px-2 py-0.5 rounded-full font-semibold">အကြံပြုချက်</span>
               </div>
               <p className="text-[11px] text-slate-600 mt-0.5">
-                လက်ရှိ စာရင်းသွင်းထားသော ရက်လုပ်သူ {suppliers.length} ဦး၊ ကုန်သည် {merchants.length} ဦး၊ ကုန်ပစ္စည်း {products.length} မျိုး၊ ဘောင်ချာ {transactions.length + sales.length} စောင် အားလုံးကို မိမိနှစ်သက်ရာ Folder / Drive တွင် သိမ်းဆည်းမည်
+                လက်ရှိ စာရင်းသွင်းထားသော ရက်လုပ်သူ {suppliers.length} ဦး၊ ကုန်သည် {merchants.length} ဦး၊ ကုန်ပစ္စည်း {products.length} မျိုး၊ ဘောင်ချာ {transactions.length + sales.length} စောင် အားလုံးကို JSON ဖိုင်အဖြစ် ဒေါင်းလုဒ်သိမ်းဆည်းမည်
               </p>
             </div>
-            <button
-              type="button"
-              id="download-backup-btn"
-              onClick={handleBackup}
-              className="w-full py-2.5 px-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-xs cursor-pointer transition-colors"
-            >
-              <FolderOpen className="w-4 h-4" />
-              <span>နေရာရွေးပြီး Backup သိမ်းမည် (Save As...)</span>
-            </button>
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                id="direct-download-backup-btn"
+                onClick={() => handleShweLetYarDocBackup(false)}
+                className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-xs cursor-pointer transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                <span>Shwe let yar doc. ထဲ ဒေါင်းလုဒ်သိမ်းမည်</span>
+              </button>
+              <button
+                type="button"
+                id="download-backup-btn"
+                onClick={() => handleShweLetYarDocBackup(true)}
+                className="w-full py-2 px-3 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-2xs cursor-pointer transition-colors"
+              >
+                <FolderOpen className="w-4 h-4 text-slate-600" />
+                <span>နေရာရွေးပြီး Backup သိမ်းမည် (Folder Picker)</span>
+              </button>
+            </div>
           </div>
 
           <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2 flex flex-col justify-between">
@@ -1054,27 +1602,52 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
             </button>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200 gap-2">
+          {/* Start App with Zero Setting */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-amber-50 border border-amber-200 gap-2">
             <div>
-              <span className="font-bold text-xs text-slate-900 block">မူလနမူနာဒေတာများ ပြန်လည်သတ်မှတ်မည်</span>
-              <span className="text-[11px] text-slate-500">
-                စနစ်စတင်ချိန်က မူလနမူနာစာရင်းများအတိုင်း ပြန်လည်စတင်ရန်
+              <span className="font-extrabold text-xs text-slate-950 block flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
+                အက်ပ်ကို လက်တွေ့ စတင်အသုံးပြုမည် (Zero Settings)
+              </span>
+              <span className="text-[11px] text-slate-600">
+                လက်ကျန်နှင့် ရရန်/ပေးရန် ဒေတာကိန်းဂဏန်း အားလုံးကို ၀ (သုည) သတ်မှတ်ပြီး စာရင်းသစ် စတင်ရန်
               </span>
             </div>
             <button
               type="button"
-              onClick={handleResetDefaults}
-              className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs rounded-lg cursor-pointer transition-colors shrink-0"
+              id="settings-zero-data-btn"
+              onClick={onOpenZeroSettings || handleClearAll}
+              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-black text-xs rounded-lg cursor-pointer transition-all shrink-0 shadow-xs border border-amber-400"
             >
-              မူလအတိုင်းပြန်ထား
+              သုည (၀) သတ်မှတ်မည်
             </button>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-rose-50 border border-rose-200 gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200 gap-2">
+            <div>
+              <span className="font-bold text-xs text-slate-900 block flex items-center gap-1.5">
+                <RefreshCw className="w-3.5 h-3.5 text-emerald-600" />
+                နမူနာဒေတာများ အစုံအလင် ပြန်လည်သွင်းမည် (Load Full Demo Data)
+              </span>
+              <span className="text-[11px] text-slate-500">
+                စနစ်အစမ်းသုံးကြည့်နိုင်ရန် ကုန်သိမ်း၊ အရောင်း၊ ကုန်သည်၊ ရက်လုပ်သူ စုံလင်သော နမူနာဒေတာများ ထည့်ရန်
+              </span>
+            </div>
+            <button
+              type="button"
+              id="settings-load-demo-data-btn"
+              onClick={onLoadDemoData || handleResetDefaults}
+              className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 active:scale-95 text-white font-bold text-xs rounded-lg cursor-pointer transition-colors shrink-0 shadow-xs"
+            >
+              နမူနာဒေတာ ထည့်မည်
+            </button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-rose-50 border border-rose-200 gap-2">
             <div>
               <span className="font-bold text-xs text-rose-950 block flex items-center gap-1">
                 <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
-                ဒေတာအားလုံး ရှင်းထုတ်မည် (Clear All Data)
+                ဒေတာအားလုံး ရှင်းထုတ်မည် (Clear All Data - သုည ပြန်ထားမည်)
               </span>
               <span className="text-[11px] text-rose-700">
                 လက်ရှိ စာရင်းအားလုံးကို ဖျက်ပြီး စာရင်းအသစ်စတင်ရန် (Snapshot အရန်သိမ်းပေးပါသည်)
@@ -1082,6 +1655,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
             </div>
             <button
               type="button"
+              id="settings-clear-all-data-btn"
               onClick={handleClearAll}
               className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg cursor-pointer transition-colors shrink-0"
             >
@@ -1090,6 +1664,330 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
           </div>
         </div>
       </div>
+
+      {/* ================= MODAL: ADD SUPPLIER ================= */}
+      {isAddSupOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                  <Users className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-slate-900 text-sm">ရက်လုပ်သူ အသစ်ထည့်သွင်းခြင်း</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddSupOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveSupplierFromSettings} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">ရက်လုပ်သူ အမည် *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="ဥပမာ - ဒေါ်လှခင်"
+                  value={supName}
+                  onChange={(e) => setSupName(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-500 font-semibold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">ကျေးရွာ</label>
+                  <input
+                    type="text"
+                    placeholder="ဥပမာ - မင်းနန်သူ"
+                    value={supVillage}
+                    onChange={(e) => setSupVillage(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-500 font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">ဖုန်းနံပါတ်</label>
+                  <input
+                    type="text"
+                    placeholder="09-xxxxxxxxx"
+                    value={supPhone}
+                    onChange={(e) => setSupPhone(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">မှတ်ချက်</label>
+                <input
+                  type="text"
+                  placeholder="ဥပမာ - ယွန်းထည် အချောရက်"
+                  value={supNotes}
+                  onChange={(e) => setSupNotes(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddSupOpen(false)}
+                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl cursor-pointer"
+                >
+                  မလုပ်တော့ပါ
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl cursor-pointer shadow-xs"
+                >
+                  ရက်လုပ်သူ စာရင်းသွင်းမည်
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: ADD MERCHANT ================= */}
+      {isAddMerchOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center">
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-slate-900 text-sm">ကုန်သည် အသစ်ထည့်သွင်းခြင်း</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddMerchOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveMerchantFromSettings} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">ကုန်သည် / ဆိုင်အမည် *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="ဥပမာ - ရွှေမန္တလေး ယွန်းဆိုင်"
+                  value={merchName}
+                  onChange={(e) => setMerchName(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500 font-semibold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">မြို့နယ်</label>
+                  <input
+                    type="text"
+                    placeholder="ဥပမာ - မန္တလေး"
+                    value={merchTown}
+                    onChange={(e) => setMerchTown(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500 font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">ဖုန်းနံပါတ်</label>
+                  <input
+                    type="text"
+                    placeholder="09-xxxxxxxxx"
+                    value={merchPhone}
+                    onChange={(e) => setMerchPhone(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">ဆိုင်လိပ်စာ</label>
+                <input
+                  type="text"
+                  placeholder="ဥပမာ - ၂၆ လမ်း၊ ၇၃ လမ်းထောင့်"
+                  value={merchAddress}
+                  onChange={(e) => setMerchAddress(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">မှတ်ချက်</label>
+                <input
+                  type="text"
+                  placeholder="မှတ်ချက်ရေးရန်..."
+                  value={merchNotes}
+                  onChange={(e) => setMerchNotes(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddMerchOpen(false)}
+                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl cursor-pointer"
+                >
+                  မလုပ်တော့ပါ
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl cursor-pointer shadow-xs"
+                >
+                  ကုန်သည် စာရင်းသွင်းမည်
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: ADD / EDIT PRODUCT ================= */}
+      {isProductModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-800 flex items-center justify-center">
+                  <Package className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-slate-900 text-sm">
+                  {editingProduct ? 'ကုန်ပစ္စည်း အချက်အလက် ပြင်ဆင်ခြင်း' : 'ကုန်ပစ္စည်း အသစ်ထည့်သွင်းခြင်း'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsProductModalOpen(false);
+                  setEditingProduct(null);
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProductFromSettings} className="space-y-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block text-slate-700 font-bold mb-1">ကုန်ပစ္စည်း အမည် *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="ဥပမာ - ၈ လက်မ ယွန်းအုပ်ခွက်"
+                    value={prodName}
+                    onChange={(e) => setProdName(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-purple-500 font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">အမျိုးအစား *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="ဥပမာ - ယွန်းထည် / ပန်းပု"
+                    value={prodCategory}
+                    onChange={(e) => setProdCategory(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-purple-500 font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">ရေတွက်ပုံ ယူနစ် *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="ထည် / ခု / စုံ / လုံး"
+                    value={prodUnit}
+                    onChange={(e) => setProdUnit(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-purple-500 font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">
+                    ဝယ်စျေး / ကုန်ကျစရိတ် (ကျပ်)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={prodBuyPrice}
+                    onChange={(e) => setProdBuyPrice(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-purple-500 font-mono font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">
+                    လက်ကား ရောင်းစျေး (ကျပ်)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={prodWholesalePrice}
+                    onChange={(e) => setProdWholesalePrice(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-purple-500 font-mono font-bold text-purple-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">
+                    အဖွင့်လက်ကျန် (Opening Stock)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={prodOpeningStock}
+                    onChange={(e) => setProdOpeningStock(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-purple-500 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">
+                    အနိမ့်ဆုံး သတိပေးလက်ကျန်
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={prodMinStock}
+                    onChange={(e) => setProdMinStock(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-purple-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsProductModalOpen(false);
+                    setEditingProduct(null);
+                  }}
+                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl cursor-pointer"
+                >
+                  မလုပ်တော့ပါ
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl cursor-pointer shadow-xs"
+                >
+                  {editingProduct ? 'ပြင်ဆင်မှု သိမ်းဆည်းမည်' : 'ကုန်ပစ္စည်း စာရင်းသွင်းမည်'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

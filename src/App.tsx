@@ -85,6 +85,10 @@ import { NewOrderNotificationModal } from './components/NewOrderNotificationModa
 import { ActionVoucherPromptModal } from './components/ActionVoucherPromptModal';
 import { LocalSyncModal } from './components/LocalSyncModal';
 import { ZapyaTransferModal } from './components/ZapyaTransferModal';
+import { UserGuideModal } from './components/UserGuideModal';
+import { ZeroSettingsConfirmModal } from './components/ZeroSettingsConfirmModal';
+import { LowStockAlertModal } from './components/LowStockAlertModal';
+import { getCleanZeroData, getFullDemoData } from './data/sampleDemoData';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 export default function App() {
@@ -137,6 +141,9 @@ export default function App() {
   const [isLocalSyncModalOpen, setIsLocalSyncModalOpen] = useState<boolean>(false);
   const [isZapyaModalOpen, setIsZapyaModalOpen] = useState<boolean>(false);
   const [isAppLockSettingsOpen, setIsAppLockSettingsOpen] = useState<boolean>(false);
+  const [isUserGuideOpen, setIsUserGuideOpen] = useState<boolean>(false);
+  const [isZeroResetModalOpen, setIsZeroResetModalOpen] = useState<boolean>(false);
+  const [isLowStockAlertModalOpen, setIsLowStockAlertModalOpen] = useState<boolean>(false);
 
   // New Notification & Action Prompts
   const [notificationOrder, setNotificationOrder] = useState<MerchantOrder | null>(null);
@@ -418,6 +425,16 @@ export default function App() {
     );
   }, [logAction]);
 
+  const handleUpdatePeerTrade = useCallback((trade: PeerTradeRecord) => {
+    setPeerTrades((prev) => prev.map((t) => (t.id === trade.id ? trade : t)));
+    logAction(
+      'ကုန်ဖလှယ်မှတ်တမ်း ပြင်ဆင်/ရှင်းလင်းခြင်း',
+      `${trade.peerShopName} - ${trade.productName} အခြေအနေ: ${trade.status}`,
+      'PEER_TRADE',
+      trade.id
+    );
+  }, [logAction]);
+
   const handleDeletePeerTrade = useCallback((tradeId: string) => {
     setPeerTrades((prev) => prev.filter((t) => t.id !== tradeId));
     logAction('မိတ်ဖက်ဆိုင် မှတ်တမ်း ဖျက်ခြင်း', `ID: ${tradeId}`, 'PEER_TRADE', tradeId);
@@ -489,16 +506,63 @@ export default function App() {
 
   // Clear All Data
   const handleConfirmClearAll = useCallback(() => {
+    // Reset all product stocks to 0
+    const zeroedProducts: Product[] = products.map((p) => ({
+      ...p,
+      openingStock: 0,
+      currentStock: 0,
+    }));
+
+    // Reset all supplier financial advances/deliveries to 0
+    const zeroedSuppliers: Supplier[] = suppliers.map((s) => ({
+      ...s,
+      initialAdvance: 0,
+      currentAdvanceBalance: 0,
+      totalGoodsValueDelivered: 0,
+      totalAdvanceGiven: 0,
+      totalMaterialCreditGiven: 0,
+      totalRepaymentReceived: 0,
+    }));
+
+    // Reset all merchant receivables/purchases to 0
+    const zeroedMerchants: Merchant[] = merchants.map((m) => ({
+      ...m,
+      currentReceivableBalance: 0,
+      totalPurchasesValue: 0,
+      totalPaidAmount: 0,
+      payableBalance: 0,
+      totalPurchasedFromMerchant: 0,
+    }));
+
+    // Reset all transactional activity
     setTransactions([]);
     setSales([]);
     setOrders([]);
     setPeerTrades([]);
+    setStockAdjustments([]);
     setAuditLogs([]);
     setDeletedItems([]);
-    localStorage.clear();
-    logAction('အချက်အလက်အားလုံး ရှင်းလင်းခြင်း', 'All data reset', 'SYSTEM');
-    window.location.reload();
-  }, [logAction]);
+    setProducts(zeroedProducts);
+    setSuppliers(zeroedSuppliers);
+    setMerchants(zeroedMerchants);
+
+    // Save directly to localStorage to guarantee persistent state
+    saveTransactions([]);
+    saveSales([]);
+    saveOrders([]);
+    savePeerTrades([]);
+    saveStoredStockAdjustments([]);
+    saveAuditLogs([]);
+    saveDeletedItems([]);
+    saveProducts(zeroedProducts);
+    saveSuppliers(zeroedSuppliers);
+    saveMerchants(zeroedMerchants);
+    // Explicitly preserve and re-save user shop settings (Shop Name, Owner Name, Phone, Address)
+    saveShopSettings(shopSettings);
+
+    logAction('အချက်အလက်အားလုံး ရှင်းလင်းခြင်း', 'All numbers reset to zero while preserving shop profile', 'SYSTEM');
+    alert('စာရင်းများနှင့် ကိန်းဂဏန်းများအားလုံးကို ၀ (သုည) အဖြစ် အောင်မြင်စွာ ရှင်းလင်းပြီးပါပြီ။ ဆိုင်ရှင်အမည်၊ ဆိုင်အမည် နှင့် ဆိုင်အချက်အလက်များကို ဆက်လက်ထိန်းသိမ်းထားပါသည်။');
+  }, [products, suppliers, merchants, shopSettings, logAction]);
 
   // Import Backup
   const handleImportBackupData = useCallback((backup: any) => {
@@ -782,6 +846,7 @@ export default function App() {
               transactions={transactions}
               sales={sales}
               stockAdjustments={stockAdjustments}
+              peerTrades={peerTrades}
               onUpdateProduct={handleUpdateProduct}
               onAddProduct={handleAddProduct}
               onAddStockAdjustment={handleAddStockAdjustment}
@@ -820,7 +885,9 @@ export default function App() {
             <PeerTradingTab
               peerTrades={peerTrades}
               products={products}
+              merchants={merchants}
               onAddPeerTrade={handleAddPeerTrade}
+              onUpdatePeerTrade={handleUpdatePeerTrade}
               onDeletePeerTrade={handleDeletePeerTrade}
             />
           )}
@@ -908,6 +975,11 @@ export default function App() {
               onOpenSyncModal={() => setIsLocalSyncModalOpen(true)}
               onOpenZapyaModal={() => setIsZapyaModalOpen(true)}
               onRestoreData={handleRestoreData}
+              onAddSupplier={handleAddSupplier}
+              onAddMerchant={handleAddMerchant}
+              onAddProduct={handleAddProduct}
+              onUpdateProduct={handleUpdateProduct}
+              onDeleteProduct={handleDeleteProduct}
             />
           )}
         </main>

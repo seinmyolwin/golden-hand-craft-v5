@@ -48,6 +48,9 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
 
   const [cashPaidByMerchant, setCashPaidByMerchant] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
+  const [deliveryVehicle, setDeliveryVehicle] = useState<string>('');
+  const [driverOrContact, setDriverOrContact] = useState<string>('');
+  const [driverPhone, setDriverPhone] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
 
   useEffect(() => {
@@ -137,6 +140,9 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
       cashPaidByMerchant,
       paymentMethod,
       remainingReceivableBalance,
+      deliveryVehicle: deliveryVehicle.trim(),
+      driverOrContact: driverOrContact.trim(),
+      driverPhone: driverPhone.trim(),
       notes: notes.trim(),
     };
 
@@ -179,6 +185,12 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
                   </option>
                 ))}
               </select>
+              {currentMerchant?.ownerOrContact && (
+                <p className="text-[11px] text-blue-700 font-semibold mt-1 flex items-center gap-1">
+                  <span>ဆက်သွယ်ရန်:</span>
+                  <span className="font-bold">{currentMerchant.ownerOrContact}</span>
+                </p>
+              )}
             </div>
             <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 flex flex-col justify-center">
               <span className="text-[11px] text-slate-500">ယခင်ရရန်ကျန်ငွေ (အကြွေးဟောင်း)</span>
@@ -345,11 +357,59 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
             </div>
           </div>
 
+          {/* Transport & Delivery Vehicle Details */}
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+              <span className="text-blue-600 font-extrabold">🚗 တင်ပေးလိုက်သည့် ကားနှင့် ဆက်သွယ်ရန်</span>
+              <span className="text-[10px] text-slate-500 font-normal">(ဂိတ်ပို့ဆောင်မှု မှတ်တမ်း)</span>
+            </div>
+
+            <div>
+              <label className="block text-slate-700 font-semibold mb-1">
+                တင်ပေးလိုက်သည့်ကား / ယာဉ်အမှတ် / ဂိတ်
+              </label>
+              <input
+                type="text"
+                placeholder="ဥပမာ - ရွှေမန္တလာ အဝေးပြေးကား 3B-5591 / မန္တလေးရွှေမန်းသူဂိတ်"
+                value={deliveryVehicle}
+                onChange={(e) => setDeliveryVehicle(e.target.value)}
+                className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">
+                  ယာဉ်မောင်း / ဆက်သွယ်ရမည့်သူ
+                </label>
+                <input
+                  type="text"
+                  placeholder="ဥပမာ - ကိုအောင်ကျော် (ယာဉ်မောင်း)"
+                  value={driverOrContact}
+                  onChange={(e) => setDriverOrContact(e.target.value)}
+                  className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                />
+              </div>
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">
+                  ဆက်သွယ်ရမည့် ဖုန်းနံပါတ်
+                </label>
+                <input
+                  type="text"
+                  placeholder="ဥပမာ - 09-790123456"
+                  value={driverPhone}
+                  onChange={(e) => setDriverPhone(e.target.value)}
+                  className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-mono"
+                />
+              </div>
+            </div>
+          </div>
+
           <div>
-            <label className="block text-slate-700 font-semibold mb-1">မှတ်ချက် / ကားဂိတ်</label>
+            <label className="block text-slate-700 font-semibold mb-1">အခြား မှတ်ချက်</label>
             <input
               type="text"
-              placeholder="ဥပမာ - မန္တလေးရွှေမန်းသူ ကားဂိတ်သို့ တင်ပို့"
+              placeholder="ဥပမာ - အထုပ်သေချာကြပ်ထုပ်ထားသည်"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs"

@@ -39,6 +39,7 @@ export interface Merchant {
   town: string; // e.g. မန္တလေး, ရန်ကုန်, ပုဂံ
   phone: string;
   address?: string;
+  ownerOrContact?: string; // ပိုင်ရှင် သို့မဟုတ် ဆက်သွယ်ရမည့်သူ
   notes?: string;
   role?: MerchantRole; // 'BUYER' (ဝယ်ယူသူ), 'SUPPLIER' (ကုန်ကြမ်းရောင်းသူ), 'BOTH' (နှစ်မျိုးလုံး)
   currentReceivableBalance: number; // Remaining debt/receivable owed by merchant to business
@@ -134,6 +135,10 @@ export interface SaleRecord {
   cashPaidByMerchant: number; // ကုန်သည်ပေးငွေ
   paymentMethod?: PaymentMethod | string;
   remainingReceivableBalance: number; // ကုန်သည်ထံမှ ရရန်ကျန်ငွေ
+  // Transport & Delivery details
+  deliveryVehicle?: string; // တင်ပေးလိုက်သည့်ကား / ယာဉ်အမှတ် / ဂိတ်
+  driverOrContact?: string; // ယာဉ်မောင်း / ဆက်သွယ်ရမည့်သူ
+  driverPhone?: string; // ဆက်သွယ်ရမည့် ဖုန်းနံပါတ်
   notes?: string;
   createdAt?: string;
 }

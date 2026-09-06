@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Product, TransactionRecord, SaleRecord, StockAdjustmentRecord } from '../types';
+import { Product, TransactionRecord, SaleRecord, StockAdjustmentRecord, PeerTradeRecord } from '../types';
 import {
   formatMMK,
   formatNumberOnly,
@@ -32,6 +32,7 @@ interface InventoryTabProps {
   transactions: TransactionRecord[];
   sales: SaleRecord[];
   stockAdjustments: StockAdjustmentRecord[];
+  peerTrades?: PeerTradeRecord[];
   onUpdateProduct?: (product: Product) => void;
   onAddProduct?: (product: Product) => void;
   onAddStockAdjustment?: (adjustment: StockAdjustmentRecord) => void;
@@ -55,6 +56,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
   transactions = [],
   sales = [],
   stockAdjustments = [],
+  peerTrades = [],
   onUpdateProduct,
   onAddProduct,
   onAddStockAdjustment,
@@ -82,11 +84,11 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
   const [newSellPrice, setNewSellPrice] = useState<number>(0);
   const [newUnit, setNewUnit] = useState<string>('ထည်');
   const [newCategory, setNewCategory] = useState<string>('ယွန်းထည်');
-  const [newOpeningStock, setNewOpeningStock] = useState<number>(50);
+  const [newOpeningStock, setNewOpeningStock] = useState<number>(0);
 
   const allStockStats: ProductStockStats[] = useMemo(() => {
-    return computeAllProductsStock(products || [], transactions || [], sales || [], stockAdjustments || []);
-  }, [products, transactions, sales, stockAdjustments]);
+    return computeAllProductsStock(products || [], transactions || [], sales || [], stockAdjustments || [], [], [], peerTrades || []);
+  }, [products, transactions, sales, stockAdjustments, peerTrades]);
 
   const summaryMetrics = useMemo(() => {
     let totalItemsStock = 0;
@@ -271,7 +273,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
     setNewProdName('');
     setNewBuyPrice(0);
     setNewSellPrice(0);
-    setNewOpeningStock(50);
+    setNewOpeningStock(0);
   };
 
   const productMovementHistory = useMemo(() => {
@@ -952,6 +954,128 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow-sm cursor-pointer transition-colors"
                 >
                   အတည်ပြုမည်
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add New Product Modal */}
+      {isAddProductModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white text-slate-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-slate-100">
+            <div className="px-4 py-3 bg-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Package className="w-5 h-5 text-emerald-400" />
+                <h3 className="text-sm font-bold">ကုန်ပစ္စည်း အသစ်ထည့်သွင်းခြင်း</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddProductModalOpen(false)}
+                className="w-7 h-7 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center cursor-pointer transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateProduct} className="p-4 space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">ကုန်ပစ္စည်းအမည် *</label>
+                <input
+                  type="text"
+                  placeholder="ဥပမာ - ယွန်း ကွမ်းအစ် (အကြီး)"
+                  value={newProdName}
+                  onChange={(e) => setNewProdName(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">အမျိုးအစား</label>
+                  <select
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="ယွန်းထည်">ယွန်းထည်</option>
+                    <option value="ဝါးထည်">ဝါးထည်</option>
+                    <option value="ကြိမ်ထည်">ကြိမ်ထည်</option>
+                    <option value="ကုန်ကြမ်း (ဝါး)">ကုန်ကြမ်း (ဝါး)</option>
+                    <option value="ကုန်ကြမ်း (ကြိမ်)">ကုန်ကြမ်း (ကြိမ်)</option>
+                    <option value="အခြား">အခြား</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">ရေတွက်ပုံ (ယူနစ်)</label>
+                  <input
+                    type="text"
+                    placeholder="ထည် / လုံး / ချပ်"
+                    value={newUnit}
+                    onChange={(e) => setNewUnit(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">ဝယ်စျေး / ကုန်ကျစရိတ် (ကျပ်)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={newBuyPrice === 0 ? '' : newBuyPrice}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => setNewBuyPrice(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">ရောင်းစျေး / လက်ကားစျေး (ကျပ်)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={newSellPrice === 0 ? '' : newSellPrice}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => setNewSellPrice(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">စတင်လက်ကျန် အရေအတွက် (Opening Stock)</label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={newOpeningStock === 0 ? '' : newOpeningStock}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => setNewOpeningStock(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+                <p className="text-[11px] text-slate-500 mt-0.5">မရှိသေးပါက သုည (၀) ထားရှိနိုင်ပါသည်</p>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddProductModalOpen(false)}
+                  className="px-3 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-semibold cursor-pointer transition-colors"
+                >
+                  မလုပ်တော့ပါ
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow-sm cursor-pointer transition-colors flex items-center gap-1"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>သိမ်းဆည်းမည်</span>
                 </button>
               </div>
             </form>
