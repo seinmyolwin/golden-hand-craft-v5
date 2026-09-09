@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Supplier,
   Product,
@@ -90,13 +90,44 @@ import { UserGuideModal } from './components/UserGuideModal';
 import { ZeroSettingsConfirmModal } from './components/ZeroSettingsConfirmModal';
 import { LowStockAlertModal } from './components/LowStockAlertModal';
 import { ExcelImportModal, ExcelImportTarget } from './components/ExcelImportModal';
+import { UpdateNotificationModal } from './components/UpdateNotificationModal';
 import { getCleanZeroData, getFullDemoData } from './data/sampleDemoData';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 export default function App() {
-  // Main Navigation & Date State
-  const [activeTab, setActiveTab] = useState<TabType>('daily');
+  // Main Navigation & Date State (Persisted across refreshes)
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('shwe_let_yar_last_tab');
+      const validTabs: TabType[] = [
+        'daily',
+        'sales',
+        'orders',
+        'peers',
+        'inventory',
+        'suppliers',
+        'merchants',
+        'products',
+        'history',
+        'reports',
+        'backup',
+      ];
+      if (saved && validTabs.includes(saved as TabType)) {
+        return saved as TabType;
+      }
+    }
+    return 'daily';
+  });
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
+
+  // Save activeTab whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('shwe_let_yar_last_tab', activeTab);
+    } catch (e) {
+      // ignore
+    }
+  }, [activeTab]);
 
   // Core Data States
   const [suppliers, setSuppliers] = useState<Supplier[]>(() => {
@@ -169,11 +200,15 @@ export default function App() {
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(() => loadAuditLogs());
   const [deletedItems, setDeletedItems] = useState<SoftDeletedItem[]>(() => loadDeletedItems());
 
-  // Security Lock State
+  // Security Lock State (using sessionStorage to persist session across page refresh)
   const [appLockSettings, setAppLockSettings] = useState<AppLockSettings>(() => loadAppLockSettings());
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
     const lock = loadAppLockSettings();
-    return !lock.enabled;
+    if (!lock.enabled) return true;
+    if (typeof window !== 'undefined' && sessionStorage.getItem('shwe_let_yar_session_unlocked') === 'true') {
+      return true;
+    }
+    return false;
   });
 
   // Modals visibility state
@@ -205,6 +240,15 @@ export default function App() {
   const [isExcelImportOpen, setIsExcelImportOpen] = useState<boolean>(false);
   const [excelImportTarget, setExcelImportTarget] = useState<ExcelImportTarget>('PRODUCTS');
 
+  // Version Update & PWA State
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState<boolean>(false);
+  const [hasPendingUpdate, setHasPendingUpdate] = useState<boolean>(false);
+
+  // Phone / Tablet Back Key & Double-Tap Exit State
+  const [showExitToast, setShowExitToast] = useState<boolean>(false);
+  const lastBackPressTimeRef = useRef<number>(0);
+
   // New Notification & Action Prompts
   const [notificationOrder, setNotificationOrder] = useState<MerchantOrder | null>(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState<boolean>(false);
@@ -222,6 +266,183 @@ export default function App() {
     type: 'INBOUND',
     item: null,
   });
+
+  // Track if ANY modal or sub-view overlay is open
+  const isAnyModalOpen = Boolean(
+    isNewEntryModalOpen ||
+    isNewSaleModalOpen ||
+    isVoucherModalOpen ||
+    isSaleVoucherModalOpen ||
+    isLedgerModalOpen ||
+    isShopProfileModalOpen ||
+    isBackupModalOpen ||
+    isDeletedHistoryModalOpen ||
+    isClearDataModalOpen ||
+    isBackupReminderOpen ||
+    isLocalSyncModalOpen ||
+    isZapyaModalOpen ||
+    isAppLockSettingsOpen ||
+    isUserGuideOpen ||
+    isZeroResetModalOpen ||
+    isLowStockAlertModalOpen ||
+    isExcelImportOpen ||
+    isNotificationOpen ||
+    actionPrompt.isOpen ||
+    isUpdateModalOpen
+  );
+
+  // Helper to close all open modals
+  const closeAllModals = useCallback(() => {
+    setIsNewEntryModalOpen(false);
+    setIsNewSaleModalOpen(false);
+    setIsVoucherModalOpen(false);
+    setIsSaleVoucherModalOpen(false);
+    setIsLedgerModalOpen(false);
+    setIsShopProfileModalOpen(false);
+    setIsBackupModalOpen(false);
+    setIsDeletedHistoryModalOpen(false);
+    setIsClearDataModalOpen(false);
+    setIsBackupReminderOpen(false);
+    setIsLocalSyncModalOpen(false);
+    setIsZapyaModalOpen(false);
+    setIsAppLockSettingsOpen(false);
+    setIsUserGuideOpen(false);
+    setIsZeroResetModalOpen(false);
+    setIsLowStockAlertModalOpen(false);
+    setIsExcelImportOpen(false);
+    setIsNotificationOpen(false);
+    setActionPrompt((prev) => ({ ...prev, isOpen: false }));
+    setIsUpdateModalOpen(false);
+  }, []);
+
+  // Back Key Navigation Handling for Phone & Tablet (Hardware & Gestures)
+  const activeTabRef = useRef<TabType>(activeTab);
+  const isAnyModalOpenRef = useRef<boolean>(isAnyModalOpen);
+
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
+
+  useEffect(() => {
+    isAnyModalOpenRef.current = isAnyModalOpen;
+  }, [isAnyModalOpen]);
+
+  // Push state to browser history whenever navigation or modal changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.history.pushState({ tab: activeTab, hasModal: isAnyModalOpen }, '');
+  }, [activeTab, isAnyModalOpen]);
+
+  // Intercept back button / gesture
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handlePopState = () => {
+      // 1. If any modal is open -> Close the modal and remain in app
+      if (isAnyModalOpenRef.current) {
+        closeAllModals();
+        window.history.pushState({ tab: activeTabRef.current, hasModal: false }, '');
+        return;
+      }
+
+      // 2. If inside a sub-tab (not 'daily' dashboard) -> Return to 'daily' dashboard
+      if (activeTabRef.current !== 'daily') {
+        setActiveTab('daily');
+        window.history.pushState({ tab: 'daily', hasModal: false }, '');
+        return;
+      }
+
+      // 3. At 'daily' dashboard -> Prompt double-tap back to safely exit
+      const now = Date.now();
+      if (now - lastBackPressTimeRef.current < 2000) {
+        // Double tap confirmed -> Allow browser/PWA default exit
+        return;
+      } else {
+        lastBackPressTimeRef.current = now;
+        window.history.pushState({ tab: 'daily', hasModal: false }, '');
+        setShowExitToast(true);
+        setTimeout(() => {
+          setShowExitToast(false);
+        }, 2000);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [closeAllModals]);
+
+  // Service Worker Update Listener & Periodic Checks
+  useEffect(() => {
+    const handleSWUpdate = () => {
+      setHasPendingUpdate(true);
+      setIsUpdateModalOpen(true);
+    };
+
+    window.addEventListener('sw-update-available', handleSWUpdate);
+
+    // Periodic check every 10 minutes
+    const interval = setInterval(() => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then((reg) => {
+          if (reg) {
+            reg.update();
+            if (reg.waiting) {
+              setHasPendingUpdate(true);
+              setIsUpdateModalOpen(true);
+            }
+          }
+        });
+      }
+    }, 10 * 60 * 1000);
+
+    return () => {
+      window.removeEventListener('sw-update-available', handleSWUpdate);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Update Execution Handler
+  const handleApplyUpdate = useCallback(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        if (reg && reg.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        } else {
+          window.location.reload();
+        }
+      });
+    } else {
+      window.location.reload();
+    }
+  }, []);
+
+  // Manual Check for Updates
+  const handleManualCheckUpdate = useCallback(async () => {
+    setIsCheckingUpdate(true);
+    let found = false;
+    try {
+      if ('serviceWorker' in navigator) {
+        const reg = (window as any).__swRegistration || (await navigator.serviceWorker.getRegistration());
+        if (reg) {
+          await reg.update();
+          if (reg.waiting) {
+            found = true;
+            setHasPendingUpdate(true);
+            setIsUpdateModalOpen(true);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Update check error:', e);
+    } finally {
+      setIsCheckingUpdate(false);
+      if (!found) {
+        alert('လက်ရှိ ဗားရှင်း v2.5.0 သည် နောက်ဆုံးထွက် ဗားရှင်းဖြစ်ပါသည်။ အသစ်ထွက်ပေါ်လာပါက အလိုအလျောက် သတိပေးမည်ဖြစ်ပါသည်။');
+      }
+    }
+  }, []);
 
   // Persist State Changes
   useEffect(() => { saveSuppliers(suppliers); }, [suppliers]);
@@ -765,19 +986,28 @@ export default function App() {
     logAction('Excel Bulk Import', `ကုန်သည် ${newMerchants.length} ဦး သွင်းယူခြင်း`, 'MERCHANT');
   }, [logAction]);
 
-  // App Lock Controls
+  // App Lock Controls (Session persistent)
   const handleUnlock = useCallback(() => {
+    try {
+      sessionStorage.setItem('shwe_let_yar_session_unlocked', 'true');
+    } catch (e) {}
     setIsUnlocked(true);
     logAction('App Lock ဖွင့်လှစ်ခြင်း', 'Unlocked successfully with PIN/Recovery Key', 'SECURITY');
   }, [logAction]);
 
   const handleLockApp = useCallback(() => {
+    try {
+      sessionStorage.removeItem('shwe_let_yar_session_unlocked');
+    } catch (e) {}
     setIsUnlocked(false);
   }, []);
 
   const handleUpdateAppLock = useCallback((updated: AppLockSettings) => {
     setAppLockSettings(updated);
     if (!updated.enabled) {
+      try {
+        sessionStorage.removeItem('shwe_let_yar_session_unlocked');
+      } catch (e) {}
       setIsUnlocked(true);
     }
     logAction(
@@ -1006,6 +1236,8 @@ export default function App() {
           onOpenAppLockSettings={() => setIsAppLockSettingsOpen(true)}
           onLockApp={handleLockApp}
           onOpenUserGuide={() => setIsUserGuideOpen(true)}
+          hasPendingUpdate={hasPendingUpdate}
+          onOpenUpdateModal={() => setIsUpdateModalOpen(true)}
         />
 
         {/* Main Content Area - Dynamic Tab Routing */}
@@ -1177,6 +1409,8 @@ export default function App() {
               onAddProduct={handleAddProduct}
               onUpdateProduct={handleUpdateProduct}
               onDeleteProduct={handleDeleteProduct}
+              onCheckForUpdates={handleManualCheckUpdate}
+              isCheckingUpdates={isCheckingUpdate}
             />
           )}
         </main>
@@ -1211,6 +1445,7 @@ export default function App() {
           selectedDate={selectedDate}
           inventoryStock={inventoryStock}
           onSave={handleSaveSale}
+          onAddNewMerchant={handleAddMerchant}
         />
 
         <VoucherModal
@@ -1348,6 +1583,21 @@ export default function App() {
           onImportSuppliers={handleImportSuppliers}
           onImportMerchants={handleImportMerchants}
         />
+
+        <UpdateNotificationModal
+          isOpen={isUpdateModalOpen}
+          onClose={() => setIsUpdateModalOpen(false)}
+          onUpdate={handleApplyUpdate}
+          newVersion="v2.5.0"
+          isChecking={isCheckingUpdate}
+        />
+
+        {showExitToast && (
+          <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 bg-slate-950/90 text-white rounded-xl shadow-2xl text-xs font-bold animate-in fade-in slide-in-from-bottom-3 duration-200 flex items-center gap-2 border border-slate-700 pointer-events-none">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+            <span>အက်ပ်မှ ထွက်ရန် နောက်သို့ ထပ်နှိပ်ပါ (Press back again to exit)</span>
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   );

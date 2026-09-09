@@ -11,6 +11,10 @@ import {
   Truck,
   DollarSign,
   AlertTriangle,
+  Search,
+  UserCheck,
+  Check,
+  UserPlus,
 } from 'lucide-react';
 
 interface NewSaleModalProps {
@@ -22,6 +26,7 @@ interface NewSaleModalProps {
   selectedDate: string;
   inventoryStock?: any[];
   onSave: (sale: SaleRecord) => void;
+  onAddNewMerchant?: (merchant: Merchant) => void;
 }
 
 export const NewSaleModal: React.FC<NewSaleModalProps> = ({
@@ -33,8 +38,15 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
   selectedDate,
   inventoryStock = [],
   onSave,
+  onAddNewMerchant,
 }) => {
   const [merchantId, setMerchantId] = useState<string>(initialMerchantId || (merchants[0]?.id || ''));
+  const [merchantSearch, setMerchantSearch] = useState<string>('');
+  const [isQuickAddMerchantOpen, setIsQuickAddMerchantOpen] = useState<boolean>(false);
+  const [newMerchantName, setNewMerchantName] = useState<string>('');
+  const [newMerchantTown, setNewMerchantTown] = useState<string>('');
+  const [newMerchantPhone, setNewMerchantPhone] = useState<string>('');
+
   const [saleDate, setSaleDate] = useState<string>(selectedDate || getTodayDateString());
   const [saleTime, setSaleTime] = useState<string>(getCurrentTimeString());
 
@@ -53,17 +65,79 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
   const [driverPhone, setDriverPhone] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
 
+  // Keep merchantId valid and synchronized whenever modal opens or merchants list updates
   useEffect(() => {
-    if (initialMerchantId) {
+    if (!isOpen) return;
+
+    if (initialMerchantId && merchants.some((m) => m.id === initialMerchantId)) {
       setMerchantId(initialMerchantId);
-    } else if (merchants.length > 0 && !merchantId) {
+    } else if (merchantId && merchants.some((m) => m.id === merchantId)) {
+      // current merchant is already valid
+    } else if (merchants.length > 0) {
       setMerchantId(merchants[0].id);
+    } else {
+      setMerchantId('');
     }
-  }, [initialMerchantId, merchants]);
+  }, [isOpen, initialMerchantId, merchants]);
+
+  // Ensure default items have valid products
+  useEffect(() => {
+    if (isOpen && items.length === 0 && products.length > 0) {
+      const firstProd = products[0];
+      setItems([
+        {
+          productId: firstProd.id,
+          quantity: 10,
+          unitPrice: firstProd.defaultWholesalePrice || Math.round(firstProd.defaultPrice * 1.25),
+        },
+      ]);
+    }
+  }, [isOpen, products, items.length]);
 
   const currentMerchant = useMemo(() => {
     return merchants.find((m) => m.id === merchantId);
   }, [merchants, merchantId]);
+
+  const filteredMerchants = useMemo(() => {
+    if (!merchantSearch.trim()) return merchants;
+    const q = merchantSearch.toLowerCase().trim();
+    return merchants.filter(
+      (m) =>
+        (m.name || '').toLowerCase().includes(q) ||
+        (m.town || '').toLowerCase().includes(q) ||
+        (m.phone || '').includes(q)
+    );
+  }, [merchants, merchantSearch]);
+
+  const handleQuickAddMerchantSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMerchantName.trim()) {
+      alert('ကုန်သည်အမည် ရိုက်ထည့်ပေးပါ');
+      return;
+    }
+
+    const newM: Merchant = {
+      id: `merchant-${Date.now()}`,
+      code: `M-${(merchants.length + 1).toString().padStart(3, '0')}`,
+      name: newMerchantName.trim(),
+      town: newMerchantTown.trim() || 'မန္တလေး',
+      phone: newMerchantPhone.trim() || '-',
+      currentReceivableBalance: 0,
+      totalPurchasesValue: 0,
+      totalPaidAmount: 0,
+      createdAt: getTodayDateString(),
+      updatedAt: getTodayDateString(),
+    };
+
+    if (onAddNewMerchant) {
+      onAddNewMerchant(newM);
+    }
+    setMerchantId(newM.id);
+    setNewMerchantName('');
+    setNewMerchantTown('');
+    setNewMerchantPhone('');
+    setIsQuickAddMerchantOpen(false);
+  };
 
   const previousReceivableBalance = currentMerchant?.currentReceivableBalance || 0;
 
@@ -172,27 +246,94 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
         <form onSubmit={handleSubmit} className="p-4 space-y-3.5 text-xs flex-1 overflow-y-auto overscroll-contain">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
-              <label className="block text-slate-700 font-bold mb-1">ကုန်သည် ရွေးချယ်ပါ *</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-slate-700 font-bold flex items-center gap-1">
+                  <span>ကုန်သည် ရွေးချယ်ပါ *</span>
+                  <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-mono">
+                    ({merchants.length})
+                  </span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsQuickAddMerchantOpen(true)}
+                  className="text-[11px] text-blue-700 hover:text-blue-900 font-bold flex items-center gap-1 cursor-pointer bg-blue-50 px-2 py-0.5 rounded-md hover:bg-blue-100 transition-colors"
+                >
+                  <UserPlus className="w-3 h-3" />
+                  <span>+ ကုန်သည်အသစ်</span>
+                </button>
+              </div>
+
+              {/* Merchant search filter input */}
+              {merchants.length > 3 && (
+                <div className="relative mb-1.5">
+                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="ကုန်သည်အမည် / မြို့နယ်ဖြင့် အမြန်ရှာရန်..."
+                    value={merchantSearch}
+                    onChange={(e) => setMerchantSearch(e.target.value)}
+                    className="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500"
+                  />
+                  {merchantSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setMerchantSearch('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Merchant Dropdown Select */}
               <select
                 value={merchantId}
                 onChange={(e) => setMerchantId(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold text-slate-900 focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2.5 bg-white border-2 border-blue-300 focus:border-blue-600 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 shadow-xs cursor-pointer touch-manipulation select-auto"
                 required
               >
-                {merchants.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} ({m.town})
-                  </option>
-                ))}
+                {merchants.length === 0 ? (
+                  <option value="">-- ကုန်သည်စာရင်း မရှိသေးပါ (+ အသစ်ထည့်ပါ) --</option>
+                ) : (
+                  <>
+                    <option value="">-- ကုန်သည် ရွေးချယ်ပါ ({filteredMerchants.length} ဦး) --</option>
+                    {filteredMerchants.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} ({m.town}){m.phone && m.phone !== '-' ? ` • ${m.phone}` : ''}
+                      </option>
+                    ))}
+                  </>
+                )}
               </select>
-              {currentMerchant?.ownerOrContact && (
-                <p className="text-[11px] text-blue-700 font-semibold mt-1 flex items-center gap-1">
-                  <span>ဆက်သွယ်ရန်:</span>
-                  <span className="font-bold">{currentMerchant.ownerOrContact}</span>
-                </p>
+
+              {merchants.length === 0 && (
+                <div className="mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between">
+                  <span className="text-[11px] text-amber-800 font-semibold">ကုန်သည်စာရင်း မရှိသေးပါ</span>
+                  <button
+                    type="button"
+                    onClick={() => setIsQuickAddMerchantOpen(true)}
+                    className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+                  >
+                    <UserPlus className="w-3 h-3" />
+                    <span>+ အခုချက်ချင်းထည့်မည်</span>
+                  </button>
+                </div>
+              )}
+
+              {currentMerchant && (
+                <div className="mt-1.5 px-2.5 py-1.5 bg-blue-50/80 border border-blue-100 rounded-lg flex items-center justify-between text-[11px]">
+                  <span className="text-blue-900 font-bold flex items-center gap-1">
+                    <UserCheck className="w-3.5 h-3.5 text-blue-700" />
+                    <span>{currentMerchant.name} ({currentMerchant.town})</span>
+                  </span>
+                  {currentMerchant.phone && currentMerchant.phone !== '-' && (
+                    <span className="text-blue-700 font-mono font-semibold">{currentMerchant.phone}</span>
+                  )}
+                </div>
               )}
             </div>
-            <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 flex flex-col justify-center">
+            <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-col justify-center">
               <span className="text-[11px] text-slate-500">ယခင်ရရန်ကျန်ငွေ (အကြွေးဟောင်း)</span>
               <span className={`text-base font-extrabold ${previousReceivableBalance > 0 ? 'text-rose-600' : 'text-slate-800'}`}>
                 {formatMMK(previousReceivableBalance)}
@@ -438,6 +579,81 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
             </button>
           </div>
         </form>
+
+        {/* Quick Add Merchant Modal Overlay */}
+        {isQuickAddMerchantOpen && (
+          <div className="fixed inset-0 z-60 bg-slate-950/70 flex items-center justify-center p-3 animate-in fade-in duration-150">
+            <div className="bg-white rounded-2xl p-4 max-w-sm w-full shadow-2xl border border-slate-200 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <UserPlus className="w-4 h-4 text-blue-600" />
+                  <h4 className="font-bold text-sm text-slate-900">ကုန်သည်အသစ် အမြန်ထည့်သွင်းမည်</h4>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsQuickAddMerchantOpen(false)}
+                  className="w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleQuickAddMerchantSubmit} className="space-y-2.5 text-xs">
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">ကုန်သည် / ဆိုင်အမည် *</label>
+                  <input
+                    type="text"
+                    required
+                    autoFocus
+                    placeholder="ဥပမာ - ရွှေမန္တလေး ယွန်းဆိုင်"
+                    value={newMerchantName}
+                    onChange={(e) => setNewMerchantName(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg font-bold text-slate-900"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">မြို့နယ် *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="မန္တလေး"
+                      value={newMerchantTown}
+                      onChange={(e) => setNewMerchantTown(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg font-semibold text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">ဖုန်းနံပါတ်</label>
+                    <input
+                      type="text"
+                      placeholder="09-..."
+                      value={newMerchantPhone}
+                      onChange={(e) => setNewMerchantPhone(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsQuickAddMerchantOpen(false)}
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg cursor-pointer"
+                  >
+                    ပယ်ဖျက်
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg cursor-pointer"
+                  >
+                    ထည့်သွင်းပြီး ရွေးချယ်မည်
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

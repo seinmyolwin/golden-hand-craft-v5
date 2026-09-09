@@ -83,9 +83,9 @@ export const DEFAULT_BACKUP_REMINDER: BackupReminderSettings = {
 export const DEFAULT_SHOP_SETTINGS: ShopSettings = {
   shopName: 'ရွှေလက်ရာ',
   tagline: 'မြန်မာ့လက်မှု ယွန်းထည်နှင့် ဝါးနှီးလုပ်ငန်း',
-  ownerName: '',
-  phone: '',
-  address: '',
+  ownerName: 'ဦးစိန်မျိုးလွင်',
+  phone: '09-123456789',
+  address: 'ပုဂံမြို့ဟောင်း၊ မန္တလေးတိုင်း',
 };
 
 export const DEFAULT_RAW_MATERIAL_PRESETS: RawMaterialPreset[] = [
@@ -191,6 +191,10 @@ export function getStoredShopSettings(): ShopSettings {
       ...DEFAULT_SHOP_SETTINGS,
       ...parsed,
       shopName: parsed.shopName?.trim() || DEFAULT_SHOP_SETTINGS.shopName,
+      ownerName: parsed.ownerName?.trim() || DEFAULT_SHOP_SETTINGS.ownerName,
+      phone: parsed.phone?.trim() || DEFAULT_SHOP_SETTINGS.phone,
+      address: parsed.address?.trim() || DEFAULT_SHOP_SETTINGS.address,
+      tagline: parsed.tagline?.trim() || DEFAULT_SHOP_SETTINGS.tagline,
     };
   } catch (e) {
     console.error('Error reading shop settings', e);

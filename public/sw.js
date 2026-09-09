@@ -1,5 +1,5 @@
 // Service Worker for Shwe Let Yar Offline Support
-const CACHE_NAME = 'shwe-let-yar-offline-v2';
+const CACHE_NAME = 'shwe-let-yar-offline-v2.5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -7,6 +7,13 @@ const STATIC_ASSETS = [
   '/logo.png',
   '/logo.svg',
 ];
+
+// Handle skipWaiting message from app when user clicks Update
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

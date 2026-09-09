@@ -124,6 +124,8 @@ interface SettingsBackupTabProps {
   onOpenZeroSettings?: () => void;
   onLoadDemoData?: () => void;
   onOpenExcelImport?: () => void;
+  onCheckForUpdates?: () => void;
+  isCheckingUpdates?: boolean;
 }
 
 export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
@@ -159,6 +161,8 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
   onOpenZeroSettings,
   onLoadDemoData,
   onOpenExcelImport,
+  onCheckForUpdates,
+  isCheckingUpdates = false,
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [editingPin, setEditingPin] = useState(false);
@@ -1274,6 +1278,74 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
               <FileSpreadsheet className="w-4 h-4" />
               <span>Excel Import ဖွင့်မည်</span>
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* App Version & Updates Card */}
+      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 border border-emerald-200">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-sm sm:text-base text-slate-900">
+                  အက်ပ် ဗားရှင်းနှင့် အဆင့်မြှင့်တင်မှု စစ်ဆေးခြင်း (App Version & Updates)
+                </h3>
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  v2.5.0 (Latest)
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                ဗားရှင်းအသစ်များ ထွက်ပေါ်လာပါက အချက်ပေးစနစ် အလိုအလျောက် သတိပေးမည်ဖြစ်ပါသည်
+              </p>
+            </div>
+          </div>
+
+          {onCheckForUpdates && (
+            <button
+              type="button"
+              disabled={isCheckingUpdates}
+              onClick={onCheckForUpdates}
+              className="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl flex items-center gap-2 cursor-pointer shadow-xs transition-all shrink-0 self-start sm:self-auto"
+            >
+              <RotateCcw className={`w-3.5 h-3.5 ${isCheckingUpdates ? 'animate-spin' : ''}`} />
+              <span>{isCheckingUpdates ? 'စစ်ဆေးနေပါသည်...' : 'ဗားရှင်းအသစ် စစ်ဆေးမည်'}</span>
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs text-slate-700">
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+            <span className="font-bold text-slate-900 flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>Mobile Back Key Support</span>
+            </span>
+            <p className="text-[11px] text-slate-500">
+              ဖုန်း/တက်ဘလက် Back key နိပ်ပါက အက်ပ်မှ မထွက်ပဲ မူလစာမျက်နှာသို့ ပြန်ပို့ပေးပါသည်
+            </p>
+          </div>
+
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+            <span className="font-bold text-slate-900 flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>Page Refresh Resilience</span>
+            </span>
+            <p className="text-[11px] text-slate-500">
+              Browser refresh ပြုလုပ်ပါက စာရင်းမှ မထွက်ပဲ ဖွင့်လက်စနေရာတွင် ဆက်လက်ရှိနေပါသည်
+            </p>
+          </div>
+
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+            <span className="font-bold text-slate-900 flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>Offline Ready (PWA)</span>
+            </span>
+            <p className="text-[11px] text-slate-500">
+              အင်တာနက် မရှိချိန်တွင်လည်း အချက်အလက်များ သိမ်းဆည်းနိုင်ပြီး ပုံမှန်အလုပ်လုပ်ပါသည်
+            </p>
           </div>
         </div>
       </div>
