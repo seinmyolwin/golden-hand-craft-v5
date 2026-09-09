@@ -350,7 +350,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
                       ရွှေလက်ရာ အက်ပ်ဖြင့် လုပ်ငန်းစာရင်းများကို စနစ်တကျ ထိန်းသိမ်းပါ
                     </h3>
                     <p className="text-xs text-slate-600 max-w-2xl leading-relaxed">
-                      အင်တာနက်လိုင်း မရှိသည့် အခြေအနေတွင်ပင် ဖုန်း သို့မဟုတ် ကွန်ပျူတာပေါ်တွင် ၁၀၀% အော့ဖ်လိုင်း သုံးနိုင်ပြီး ရက်လုပ်သူ အကြိုငွေစာရင်း၊ ကုန်သည်လက်ကား ရောင်းချမှု၊ ကားဂိတ်ပို့ဆောင်မှု၊ ပစ္စည်းလက်ကျန် အနိမ့်ဆုံး သတိပေးချက်များနှင့် Shwe let yar doc. ဖိုင်တွဲထဲ အရန်သိမ်းဆည်းမှုများကို ပြည့်စုံစွာ ဆောင်ရွက်ပေးနိုင်ပါသည်။
+                      အင်တာနက်လိုင်း မရှိသည့် အခြေအနေတွင်ပင် ဖုန်း သို့မဟုတ် ကွန်ပျူတာပေါ်တွင် ၁၀၀% အော့ဖ်လိုင်း သုံးနိုင်ပြီး ကုန်ပစ္စည်းပေးသွင်းသူ အကြိုငွေစာရင်း၊ ကုန်သည်လက်ကား ရောင်းချမှု၊ ကားဂိတ်ပို့ဆောင်မှု၊ ပစ္စည်းလက်ကျန် အနိမ့်ဆုံး သတိပေးချက်များနှင့် Shwe let yar doc. ဖိုင်တွဲထဲ အရန်သိမ်းဆည်းမှုများကို ပြည့်စုံစွာ ဆောင်ရွက်ပေးနိုင်ပါသည်။
                     </p>
                   </div>
                 </div>
@@ -361,7 +361,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
                     <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
                       <ArrowDownLeft className="w-4 h-4" />
                     </div>
-                    <h4 className="font-bold text-xs text-slate-900">ရက်လုပ်သူထံမှ ကုန်သိမ်းခြင်း</h4>
+                    <h4 className="font-bold text-xs text-slate-900">ကုန်ပစ္စည်းပေးသွင်းသူထံမှ ကုန်သိမ်းခြင်း</h4>
                     <p className="text-[11px] text-slate-600 leading-relaxed">
                       ပေးသွင်းကုန်ပစ္စည်းတန်ဖိုးတွက်ချက်ပြီး ယခင်အကြိုငွေကျန်မှ နုတ်ယူခြင်း၊ အပိုပေးငွေနှင့် အကြိုငွေအသစ် ထုတ်ပေးခြင်းများကို တစ်မျက်နှာတည်းတွင် အလိုအလျောက် တွက်ချက်ပေးပါသည်။
                     </p>
@@ -429,7 +429,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
                     <span>၁။ ကုန်သိမ်းဘောင်ချာ ဖွင့်နည်း (Inbound Pickup & Advance Settlement)</span>
                   </h3>
                   <p className="text-xs text-slate-500 mt-1">
-                    ရက်လုပ်သူထံမှ ကုန်ပစ္စည်းလက်ခံခြင်း၊ အကြိုငွေနုတ်ယူခြင်းနှင့် ငွေရှင်းတွက်ချက်မှု အဆင့်ဆင့်
+                    ကုန်ပစ္စည်းပေးသွင်းသူထံမှ ကုန်ပစ္စည်းလက်ခံခြင်း၊ အကြိုငွေနုတ်ယူခြင်းနှင့် ငွေရှင်းတွက်ချက်မှု အဆင့်ဆင့်
                   </p>
                 </div>
 
@@ -453,7 +453,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
                   <div className="bg-slate-850 rounded-xl p-3 sm:p-4 border border-slate-700 space-y-3 text-xs">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-800 p-2.5 rounded-lg border border-slate-700">
                       <div>
-                        <span className="text-[10px] text-slate-400">ရက်လုပ်သူ ရွေးချယ်မှု:</span>
+                        <span className="text-[10px] text-slate-400">ကုန်ပစ္စည်းပေးသွင်းသူ ရွေးချယ်မှု:</span>
                         <div className="font-bold text-white text-sm">ဦးဘတင် (ကျောက်ပန်းတောင်းရွာ)</div>
                       </div>
                       <div className="text-right">
@@ -511,7 +511,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
                   <h4 className="font-bold text-sm text-slate-900">လိုက်နာဆောင်ရွက်ရန် အဆင့်များ:</h4>
                   <ol className="list-decimal list-inside space-y-2">
                     <li>
-                      <strong>ရက်လုပ်သူ ရွေးချယ်ခြင်း:</strong> မျက်နှာပြင်ထိပ်ရှိ <strong>"+ ကုန်သိမ်း"</strong> ခလုတ်ကို နှိပ်ပြီး ရက်လုပ်သူအမည်ကို ရွေးပါ။ ထိုရက်လုပ်သူ၏ ယခင်အကြိုငွေကျန်ကို အလိုအလျောက် ပြသပေးပါမည်။
+                      <strong>ကုန်ပစ္စည်းပေးသွင်းသူ ရွေးချယ်ခြင်း:</strong> မျက်နှာပြင်ထိပ်ရှိ <strong>"+ ကုန်သိမ်း"</strong> ခလုတ်ကို နှိပ်ပြီး ပေးသွင်းသူအမည်ကို ရွေးပါ။ ထိုသူ၏ ယခင်အကြိုငွေကျန်ကို အလိုအလျောက် ပြသပေးပါမည်။
                     </li>
                     <li>
                       <strong>ကုန်ပစ္စည်းများနှင့် အရေအတွက် ထည့်သွင်းခြင်း:</strong> ကုန်ပစ္စည်းအမည်၊ ရေတွက်ပုံယူနစ်၊ ဝယ်ယူစျေးနှုန်းနှင့် အရေအတွက်ကို ဖြည့်ပါ။ စုစုပေါင်း ပေးသွင်းတန်ဖိုးကို တွက်ချက်ပေးပါမည်။
@@ -520,7 +520,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
                       <strong>အကြိုငွေမှ နုတ်ယူခြင်း (Advance Deducted):</strong> ယခုတစ်ကြိမ် ကုန်ဖိုးမှ နုတ်ယူမည့် အကြိုငွေပမာဏကို ထည့်ပါ။ ကျန်ငွေကို လက်ငင်း ပေးချေငွေအဖြစ် အလိုအလျောက် သတ်မှတ်ပေးပါမည်။
                     </li>
                     <li>
-                      <strong>အကြိုငွေအသစ် ထုတ်ယူခြင်း (ရှိပါက):</strong> နောက်တစ်ကြိမ် ရက်လုပ်ရန် ရက်လုပ်သူမှ အကြိုငွေ ထပ်မံတောင်းခံပါက <strong>"အကြိုငွေအသစ်"</strong> အကွက်တွင် ဖြည့်စွက်ပြီး အကြောင်းပြချက် မှတ်တမ်းတင်နိုင်ပါသည်။
+                      <strong>အကြိုငွေအသစ် ထုတ်ယူခြင်း (ရှိပါက):</strong> နောက်တစ်ကြိမ် ကုန်ပစ္စည်းပေးသွင်းရန် ပေးသွင်းသူမှ အကြိုငွေ ထပ်မံတောင်းခံပါက <strong>"အကြိုငွေအသစ်"</strong> အကွက်တွင် ဖြည့်စွက်ပြီး အကြောင်းပြချက် မှတ်တမ်းတင်နိုင်ပါသည်။
                     </li>
                     <li>
                       <strong>ဘောင်ချာ သိမ်းဆည်းခြင်းနှင့် Print ထုတ်ခြင်း:</strong> <strong>"ဘောင်ချာ ထုတ်ယူသိမ်းဆည်းမည်"</strong> နှိပ်ပါက စာရင်းများ အလိုအလျောက် Update ဖြစ်သွားပြီး ပရင့်ထုတ်နိုင်သော ဘောင်ချာ ချက်ချင်း ပွင့်လာပါမည်။
@@ -539,7 +539,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
                     <span>၂။ ဝါး၊ ကြိမ်နှင့် ကုန်ကြမ်းကြိုထုတ် / ငွေကြိုယူ မိုဒယ်လ် (Raw Material Credit & Cash Advance)</span>
                   </h3>
                   <p className="text-xs text-slate-500 mt-1">
-                    ရက်လုပ်သူများထံသို့ ဝါး၊ ကြိမ်၊ အခြားကုန်ကြမ်းများ ကြိုတင်ထုတ်ပေးခြင်း သို့မဟုတ် ငွေကြိုထုတ်ပေးခြင်းတို့ကို ဘောင်ချာဖွင့်၍ အကြိုငွေစာရင်းထဲ တိုးမြှင့်မှတ်တမ်းတင်နည်း
+                    ကုန်ပစ္စည်းပေးသွင်းသူများထံသို့ ဝါး၊ ကြိမ်၊ အခြားကုန်ကြမ်းများ ကြိုတင်ထုတ်ပေးခြင်း သို့မဟုတ် ငွေကြိုထုတ်ပေးခြင်းတို့ကို ဘောင်ချာဖွင့်၍ အကြိုငွေစာရင်းထဲ တိုးမြှင့်မှတ်တမ်းတင်နည်း
                   </p>
                 </div>
 
@@ -563,7 +563,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
                   <div className="bg-slate-850 rounded-xl p-3 sm:p-4 border border-slate-700 space-y-3 text-xs">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-800 p-2.5 rounded-lg border border-slate-700">
                       <div>
-                        <span className="text-[10px] text-slate-400">ရက်လုပ်သူ (ရွာ/လိပ်စာ):</span>
+                        <span className="text-[10px] text-slate-400">ကုန်ပစ္စည်းပေးသွင်းသူ (ရွာ/လိပ်စာ):</span>
                         <div className="font-bold text-white text-sm">ကိုအောင်မြင့် (ကျောက်ကာရွာ)</div>
                       </div>
                       <div className="text-right">
@@ -668,7 +668,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
                         <span>၂။ "ငွေကြိုယူ" (Cash Advance) သီးသန့် အလိုအလျောက် သတ်မှတ်ခြင်း</span>
                       </div>
                       <p className="text-slate-600 text-[11px]">
-                        အမျိုးအစားတွင် <strong>"ငွေကြိုယူ"</strong> ကို ရွေးချယ်လိုက်ပါက ယူနစ်ကို <strong>"ကျပ်"</strong> အဖြစ်လည်းကောင်း၊ ပေါက်ဈေးကို <strong>"၁ ကျပ်"</strong> အဖြစ်လည်းကောင်း စနစ်မှ အလိုအလျောက် သတ်မှတ်ပေးပြီး ရက်လုပ်သူယူမည့် ငွေပမာဏကိုသာ တိုက်ရိုက်ရိုက်ထည့်ပေးရန် လိုအပ်ပါသည်။
+                        အမျိုးအစားတွင် <strong>"ငွေကြိုယူ"</strong> ကို ရွေးချယ်လိုက်ပါက ယူနစ်ကို <strong>"ကျပ်"</strong> အဖြစ်လည်းကောင်း၊ ပေါက်ဈေးကို <strong>"၁ ကျပ်"</strong> အဖြစ်လည်းကောင်း စနစ်မှ အလိုအလျောက် သတ်မှတ်ပေးပြီး ကုန်ပစ္စည်းပေးသွင်းသူယူမည့် ငွေပမာဏကိုသာ တိုက်ရိုက်ရိုက်ထည့်ပေးရန် လိုအပ်ပါသည်။
                       </p>
                     </div>
 
@@ -678,7 +678,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
                         <span>၃။ အကြိုငွေစာရင်း အလိုအလျောက် တိုးခြင်း</span>
                       </div>
                       <p className="text-slate-600 text-[11px]">
-                        ကုန်ကြမ်းကြိုထုတ်ပေးမှု (သို့မဟုတ်) ငွေကြိုယူမှု အတည်ပြုလိုက်ပါက ရက်လုပ်သူ၏ အကြိုငွေလက်ကျန်တွင် ချက်ချင်း တိုးသွားပြီး နောက်တစ်ကြိမ် ကုန်သိမ်းဘောင်ချာ ဖွင့်သောအခါ အဆိုပါငွေကို ပြန်လည်နုတ်ယူရှင်းလင်းနိုင်ပါသည်။
+                        ကုန်ကြမ်းကြိုထုတ်ပေးမှု (သို့မဟုတ်) ငွေကြိုယူမှု အတည်ပြုလိုက်ပါက ကုန်ပစ္စည်းပေးသွင်းသူ၏ အကြိုငွေလက်ကျန်တွင် ချက်ချင်း တိုးသွားပြီး နောက်တစ်ကြိမ် ကုန်သိမ်းဘောင်ချာ ဖွင့်သောအခါ အဆိုပါငွေကို ပြန်လည်နုတ်ယူရှင်းလင်းနိုင်ပါသည်။
                       </p>
                     </div>
 
@@ -798,7 +798,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
                     <span>၄။ လက်ကျန်ကုန်ပစ္စည်းနှင့် အနိမ့်ဆုံးသတိပေးချက် (Inventory & Reorder Alert)</span>
                   </h3>
                   <p className="text-xs text-slate-500 mt-1">
-                    အနည်းဆုံးရှိရမည့် လက်ကျန်သတ်မှတ်ခြင်းနှင့် ဦးစားပေး ထပ်မံရက်လုပ်/ဝယ်ယူရန် သတိပေးချက် ထုတ်ယူခြင်း
+                    အနည်းဆုံးရှိရမည့် လက်ကျန်သတ်မှတ်ခြင်းနှင့် ဦးစားပေး ထပ်မံမှာယူ/ဝယ်ယူရန် သတိပေးချက် ထုတ်ယူခြင်း
                   </p>
                 </div>
 
@@ -836,7 +836,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
                           </div>
                         </div>
                         <span className="text-[10px] font-bold px-2 py-1 bg-emerald-600 text-white rounded">
-                          + ရက်လုပ်အပ်မည်
+                          + ကုန်သိမ်းမည်
                         </span>
                       </div>
 
@@ -848,7 +848,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
                           </div>
                         </div>
                         <span className="text-[10px] font-bold px-2 py-1 bg-emerald-600 text-white rounded">
-                          + ရက်လုပ်အပ်မည်
+                          + ကုန်သိမ်းမည်
                         </span>
                       </div>
                     </div>
@@ -1051,7 +1051,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
                     </div>
                     <div className="flex items-center gap-2 text-emerald-800">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>ရက်လုပ်သူများထံ ပေးရန်ကျန် အကြိုငွေအားလုံး သုည (၀) သို့ ပြောင်းပေးပါမည်။</span>
+                      <span>ကုန်ပစ္စည်းပေးသွင်းသူများထံ ပေးရန်ကျန် အကြိုငွေအားလုံး သုည (၀) သို့ ပြောင်းပေးပါမည်။</span>
                     </div>
                     <div className="flex items-center gap-2 text-emerald-800">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -1063,7 +1063,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({
                     </div>
                     <div className="flex items-center gap-2 text-blue-900">
                       <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
-                      <span>ဆိုင်အမည်၊ ဆိုင်ရှင်အမည်နှင့် ရက်လုပ်သူ/ကုန်သည်/ကုန်ပစ္စည်း အမည်များကို ဆက်လက် ထိန်းသိမ်းပေးထားပါမည် (အသစ်ပြန်ရိုက်စရာမလိုပါ)။</span>
+                      <span>ဆိုင်အမည်၊ ဆိုင်ရှင်အမည်နှင့် ကုန်ပစ္စည်းပေးသွင်းသူ/ကုန်သည်/ကုန်ပစ္စည်း အမည်များကို ဆက်လက် ထိန်းသိမ်းပေးထားပါမည် (အသစ်ပြန်ရိုက်စရာမလိုပါ)။</span>
                     </div>
                   </div>
 

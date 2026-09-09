@@ -123,6 +123,7 @@ interface SettingsBackupTabProps {
   onOpenUserGuide?: () => void;
   onOpenZeroSettings?: () => void;
   onLoadDemoData?: () => void;
+  onOpenExcelImport?: () => void;
 }
 
 export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
@@ -157,6 +158,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
   onOpenUserGuide,
   onOpenZeroSettings,
   onLoadDemoData,
+  onOpenExcelImport,
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [editingPin, setEditingPin] = useState(false);
@@ -411,7 +413,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
   const handleSaveSupplierFromSettings = (e: React.FormEvent) => {
     e.preventDefault();
     if (!supName.trim()) {
-      alert('ရက်လုပ်သူ အမည် ထည့်သွင်းပေးပါ');
+      alert('ကုန်ပစ္စည်းပေးသွင်းသူ အမည် ထည့်သွင်းပေးပါ');
       return;
     }
     const newSup: Supplier = {
@@ -432,7 +434,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
     };
     if (onAddSupplier) {
       onAddSupplier(newSup);
-      alert(`ရက်လုပ်သူ "${newSup.name}" ကို အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ`);
+      alert(`ကုန်ပစ္စည်းပေးသွင်းသူ "${newSup.name}" ကို အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ`);
     }
     setIsAddSupOpen(false);
     setSupName('');
@@ -695,7 +697,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
                 အဓိက အချက်အလက်နှင့် ကုန်ပစ္စည်း စီမံခန့်ခွဲမှု (Entity & Products Master)
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                ရက်လုပ်သူအသစ်၊ ကုန်သည်အသစ်၊ ကုန်ပစ္စည်းအသစ် ထည့်သွင်းခြင်းနှင့် ကုန်ပစ္စည်းစာရင်း စိတ်ကြိုက် ပြင်ဆင်/ဖျက်/ထည့်ခြင်း
+                ကုန်ပစ္စည်းပေးသွင်းသူအသစ်၊ ကုန်သည်အသစ်၊ ကုန်ပစ္စည်းအသစ် ထည့်သွင်းခြင်းနှင့် ကုန်ပစ္စည်းစာရင်း စိတ်ကြိုက် ပြင်ဆင်/ဖျက်/ထည့်ခြင်း
               </p>
             </div>
           </div>
@@ -708,14 +710,14 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-emerald-700" />
-                <span className="font-bold text-xs text-emerald-950">ရက်လုပ်သူ အသစ်ထည့်ရန်</span>
+                <span className="font-bold text-xs text-emerald-950">ကုန်ပစ္စည်းပေးသွင်းသူ အသစ်ထည့်ရန်</span>
               </div>
               <span className="text-[11px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-200">
                 စုစုပေါင်း {suppliers.length} ဦး
               </span>
             </div>
             <p className="text-[11px] text-slate-600">
-              ယွန်းထည်/လက်မှု ရက်လုပ်သူအသစ်များ၏ အမည်၊ ရွာ၊ ဖုန်းနံပါတ် သတ်မှတ်ချက်များ
+              ယွန်းထည်/လက်မှု ပေးသွင်းသူအသစ်များ၏ အမည်၊ ရွာ၊ ဖုန်းနံပါတ် သတ်မှတ်ချက်များ
             </p>
             <button
               type="button"
@@ -729,7 +731,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
               className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shadow-xs transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>+ ရက်လုပ်သူ အသစ်ထည့်မည်</span>
+              <span>+ ပေးသွင်းသူ အသစ်ထည့်မည်</span>
             </button>
           </div>
 
@@ -1213,7 +1215,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="bg-white/10 hover:bg-white/15 p-3.5 rounded-xl border border-indigo-400/20 flex flex-col justify-between space-y-3 transition-colors">
             <div>
               <div className="flex items-center gap-2">
@@ -1238,10 +1240,10 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <Share2 className="w-4 h-4 text-purple-400" />
-                <span className="font-bold text-xs text-white">Zapya / Bluetooth ဖြင့် App တစ်ခုလုံးပို့မည်</span>
+                <span className="font-bold text-xs text-white">Zapya / Bluetooth ဖြင့် ပို့မည်</span>
               </div>
               <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
-                App တစ်ခုလုံးကို HTML ဖိုင်အဖြစ် Zapya / Xender မှတစ်ဆင့် အခြားဖုန်းသို့ ပေးပို့နိုင်သည်
+                App တစ်ခုလုံး သို့မဟုတ် Backup ဖိုင်ကို Zapya / ShareMe မှတစ်ဆင့် အခြားဖုန်းသို့ ပေးပို့နိုင်သည်
               </p>
             </div>
             <button
@@ -1251,6 +1253,26 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
             >
               <Share2 className="w-4 h-4" />
               <span>Zapya မျှဝေမည်</span>
+            </button>
+          </div>
+
+          <div className="bg-white/10 hover:bg-white/15 p-3.5 rounded-xl border border-emerald-400/20 flex flex-col justify-between space-y-3 transition-colors">
+            <div>
+              <div className="flex items-center gap-2">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                <span className="font-bold text-xs text-white">Excel ဖြင့် စာရင်းအမြောက်အမြား သွင်းမည်</span>
+              </div>
+              <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                ကုန်ပစ္စည်း၊ ပေးသွင်းသူ၊ ကုန်သည်စာရင်း ရာထောင်ချီကို Excel (.xlsx) ဖြင့် တစ်ပြိုင်နက် သွင်းနိုင်သည်
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onOpenExcelImport}
+              className="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/40 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-colors"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Excel Import ဖွင့်မည်</span>
             </button>
           </div>
         </div>
@@ -1320,7 +1342,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
                   <div className="text-[11px] text-slate-500 mt-0.5 flex flex-wrap gap-x-2">
                     <span>ပစ္စည်း: {snap.recordCounts.products}</span>
                     <span>•</span>
-                    <span>ရက်လုပ်သူ: {snap.recordCounts.suppliers}</span>
+                    <span>ပေးသွင်းသူ: {snap.recordCounts.suppliers}</span>
                     <span>•</span>
                     <span>ကုန်သည်: {snap.recordCounts.merchants}</span>
                     <span>•</span>
@@ -1526,7 +1548,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
                 <span className="text-[10px] bg-emerald-700 text-white px-2 py-0.5 rounded-full font-semibold">အကြံပြုချက်</span>
               </div>
               <p className="text-[11px] text-slate-600 mt-0.5">
-                လက်ရှိ စာရင်းသွင်းထားသော ရက်လုပ်သူ {suppliers.length} ဦး၊ ကုန်သည် {merchants.length} ဦး၊ ကုန်ပစ္စည်း {products.length} မျိုး၊ ဘောင်ချာ {transactions.length + sales.length} စောင် အားလုံးကို JSON ဖိုင်အဖြစ် ဒေါင်းလုဒ်သိမ်းဆည်းမည်
+                လက်ရှိ စာရင်းသွင်းထားသော ကုန်ပစ္စည်းပေးသွင်းသူ {suppliers.length} ဦး၊ ကုန်သည် {merchants.length} ဦး၊ ကုန်ပစ္စည်း {products.length} မျိုး၊ ဘောင်ချာ {transactions.length + sales.length} စောင် အားလုံးကို JSON ဖိုင်အဖြစ် ဒေါင်းလုဒ်သိမ်းဆည်းမည်
               </p>
             </div>
             <div className="space-y-2 pt-1">
@@ -1594,7 +1616,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
           >
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 mb-1">
               <Users className="w-4 h-4 text-emerald-600" />
-              <span>ရက်လုပ်သူစာရင်း</span>
+              <span>ကုန်ပစ္စည်းပေးသွင်းသူစာရင်း</span>
             </div>
             <span className="text-[11px] text-slate-500 block">Suppliers ({suppliers.length} ဦး)</span>
           </button>
@@ -1646,7 +1668,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
               <span>ဝါး၊ ကြိမ်နှင့် ကုန်ကြမ်းကြိုထုတ် အမျိုးအစားများ စိတ်ကြိုက်စီမံခြင်း</span>
             </h3>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              ရက်လုပ်သူများထံ ကုန်ကြမ်းကြိုထုတ်ပေးရာတွင် drop-down ၌ အမြန်ရွေးချယ်နိုင်သော ကုန်ကြမ်းအမည်များ၊ ယူနစ်နှင့် ပေါက်ဈေးများကို စိတ်ကြိုက်ထည့်သွင်း/ဖျက်ပယ်နိုင်ပါသည်
+              ကုန်ပစ္စည်းပေးသွင်းသူများထံ ကုန်ကြမ်းကြိုထုတ်ပေးရာတွင် drop-down ၌ အမြန်ရွေးချယ်နိုင်သော ကုန်ကြမ်းအမည်များ၊ ယူနစ်နှင့် ပေါက်ဈေးများကို စိတ်ကြိုက်ထည့်သွင်း/ဖျက်ပယ်နိုင်ပါသည်
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -1791,7 +1813,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
                 className="w-full py-1.5 px-2 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 text-[11px] font-semibold rounded-lg flex items-center justify-center gap-1 cursor-pointer transition-colors"
               >
                 <Users className="w-3 h-3 text-emerald-600" />
-                <span>ရက်လုပ်သူ ၁၀၀ ဦး စမ်းသပ်ထည့်မည်</span>
+                <span>ပေးသွင်းသူ ၁၀၀ ဦး စမ်းသပ်ထည့်မည်</span>
               </button>
             </div>
           </div>
@@ -1839,7 +1861,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
                 ၃။ ဒေတာအားလုံး ရှင်းထုတ်မည် (Factory Reset)
               </h4>
               <p className="text-[11px] text-rose-700 leading-relaxed">
-                ဖုန်းတွင်းရှိ စာရင်းမှတ်တမ်းများ၊ ကုန်ပစ္စည်းစာရင်း၊ ရက်လုပ်သူ/ကုန်သည်များ၊ ဆက်တင်များနှင့် စကားဝှက်များကို အပြီးတိုင် ရှင်းထုတ်ပြီး မူလစတင်စက်ဆင်ခါစကဲ့သို့ အကုန်ရှင်းထုတ်ပါမည်။ (မဖျက်မီ Auto Snapshot အရန်သိမ်းပေးပါသည်)။
+                ဖုန်းတွင်းရှိ စာရင်းမှတ်တမ်းများ၊ ကုန်ပစ္စည်းစာရင်း၊ ကုန်ပစ္စည်းပေးသွင်းသူ/ကုန်သည်များ၊ ဆက်တင်များနှင့် စကားဝှက်များကို အပြီးတိုင် ရှင်းထုတ်ပြီး မူလစတင်စက်ဆင်ခါစကဲ့သို့ အကုန်ရှင်းထုတ်ပါမည်။ (မဖျက်မီ Auto Snapshot အရန်သိမ်းပေးပါသည်)။
               </p>
             </div>
 
@@ -1878,7 +1900,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
                 <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
                   <Users className="w-4 h-4" />
                 </div>
-                <h3 className="font-bold text-slate-900 text-sm">ရက်လုပ်သူ အသစ်ထည့်သွင်းခြင်း</h3>
+                <h3 className="font-bold text-slate-900 text-sm">ကုန်ပစ္စည်းပေးသွင်းသူ အသစ်ထည့်သွင်းခြင်း</h3>
               </div>
               <button
                 type="button"
@@ -1891,7 +1913,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
 
             <form onSubmit={handleSaveSupplierFromSettings} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-700 font-bold mb-1">ရက်လုပ်သူ အမည် *</label>
+                <label className="block text-slate-700 font-bold mb-1">ကုန်ပစ္စည်းပေးသွင်းသူ အမည် *</label>
                 <input
                   type="text"
                   required
@@ -1948,7 +1970,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
                   type="submit"
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl cursor-pointer shadow-xs"
                 >
-                  ရက်လုပ်သူ စာရင်းသွင်းမည်
+                  ကုန်ပစ္စည်းပေးသွင်းသူ စာရင်းသွင်းမည်
                 </button>
               </div>
             </form>
@@ -2297,7 +2319,7 @@ export const SettingsBackupTab: React.FC<SettingsBackupTabProps> = ({
               </div>
 
               <p className="text-[11px] text-slate-500 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
-                ဤကုန်ကြမ်းအမည်သည် ရက်လုပ်သူများထံ ကုန်ကြမ်းကြိုထုတ်ပေးသည့် modal drop-down စာရင်းတွင် ချက်ချင်းပေါ်လာမည်ဖြစ်ပါသည်။
+                ဤကုန်ကြမ်းအမည်သည် ကုန်ပစ္စည်းပေးသွင်းသူများထံ ကုန်ကြမ်းကြိုထုတ်ပေးသည့် modal drop-down စာရင်းတွင် ချက်ချင်းပေါ်လာမည်ဖြစ်ပါသည်။
               </p>
 
               <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">

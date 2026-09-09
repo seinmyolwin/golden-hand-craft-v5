@@ -163,7 +163,7 @@ export const NewEntryModal: React.FC<NewEntryModalProps> = ({
           {/* Supplier Selection & Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
-              <label className="block text-slate-700 font-bold mb-1">ရက်လုပ်သူ ရွေးချယ်ပါ *</label>
+              <label className="block text-slate-700 font-bold mb-1">ကုန်ပစ္စည်းပေးသွင်းသူ ရွေးချယ်ပါ *</label>
               <select
                 value={supplierId}
                 onChange={(e) => setSupplierId(e.target.value)}
@@ -248,9 +248,11 @@ export const NewEntryModal: React.FC<NewEntryModalProps> = ({
                       min="1"
                       placeholder="အရေအတွက်"
                       value={item.quantity === 0 ? '' : item.quantity}
+                      onFocus={(e) => e.target.select()}
                       onChange={(e) => {
+                        const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
                         const updated = [...items];
-                        updated[idx].quantity = parseInt(e.target.value, 10) || 0;
+                        updated[idx].quantity = cleanStr === '' ? 0 : parseInt(cleanStr, 10) || 0;
                         setItems(updated);
                       }}
                       className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold"
@@ -286,8 +288,10 @@ export const NewEntryModal: React.FC<NewEntryModalProps> = ({
                   min="0"
                   placeholder="ငွေပမာဏ - 0"
                   value={newAdvanceTaken === 0 ? '' : newAdvanceTaken}
+                  onFocus={(e) => e.target.select()}
                   onChange={(e) => {
-                    const val = parseInt(e.target.value, 10);
+                    const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
+                    const val = cleanStr === '' ? 0 : parseInt(cleanStr, 10);
                     setNewAdvanceTaken(isNaN(val) ? 0 : Math.max(0, val));
                   }}
                   className="w-full px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-bold text-amber-900"
@@ -317,7 +321,7 @@ export const NewEntryModal: React.FC<NewEntryModalProps> = ({
             </div>
             {netCashPaidToSupplier > 0 && (
               <div className="flex justify-between text-xs">
-                <span className="text-slate-400">ရက်လုပ်သူသို့ လက်ငင်းရှင်းပေးငွေ:</span>
+                <span className="text-slate-400">ကုန်ပစ္စည်းပေးသွင်းသူသို့ လက်ငင်းရှင်းပေးငွေ:</span>
                 <strong className="text-blue-300">{formatMMK(netCashPaidToSupplier)}</strong>
               </div>
             )}

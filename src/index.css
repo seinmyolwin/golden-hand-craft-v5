@@ -8,49 +8,83 @@
 
 @media print {
   @page {
-    margin: 10mm 12mm;
+    margin: 6mm 8mm;
     size: auto;
   }
-  
+
   body {
     background: white !important;
     color: black !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  .print-page-break {
-    break-before: page !important;
-    page-break-before: always !important;
+  /* Isolate printable voucher and hide background app clutter */
+  body:has(.voucher-printable-scope) #app-root-content,
+  body:has(.voucher-printable-scope) header,
+  body:has(.voucher-printable-scope) nav,
+  body:has(.voucher-printable-scope) .print-hidden,
+  body:has(.voucher-printable-scope) .print\:hidden {
+    display: none !important;
   }
 
+  /* When printing, hide any element with print:hidden */
   .print-hidden,
   .print\:hidden {
     display: none !important;
   }
 
-  /* Expand modal when printing */
-  .modal-printable-container {
+  /* Universal single-page guarantee for vouchers */
+  .voucher-printable-scope {
     position: static !important;
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-    box-shadow: none !important;
-    border: none !important;
     width: 100% !important;
     max-width: 100% !important;
+    margin: 0 auto !important;
     padding: 0 !important;
-    margin: 0 !important;
     background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+    overflow: visible !important;
   }
 
-  .modal-printable-backdrop {
-    position: static !important;
-    background: white !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    overflow: visible !important;
-    display: block !important;
+  /* Paper size specific styling */
+  .paper-a4 {
+    width: 100% !important;
+    max-width: 190mm !important;
+    margin: 0 auto !important;
+    font-size: 13px !important;
+  }
+
+  .paper-a5 {
+    width: 100% !important;
+    max-width: 138mm !important;
+    margin: 0 auto !important;
+    font-size: 11px !important;
+  }
+
+  .paper-80mm {
+    width: 76mm !important;
+    max-width: 76mm !important;
+    margin: 0 auto !important;
+    font-size: 10px !important;
+    padding: 2mm !important;
+  }
+
+  .paper-58mm {
+    width: 54mm !important;
+    max-width: 54mm !important;
+    margin: 0 auto !important;
+    font-size: 9px !important;
+    padding: 1mm !important;
   }
 }
 

@@ -79,7 +79,7 @@ export const ZeroSettingsConfirmModal: React.FC<ZeroSettingsConfirmModalProps> =
               </li>
               <li className="flex items-start gap-2 text-emerald-800 font-medium">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span><strong>ရက်လုပ်သူ အကြိုငွေ (Supplier Advance):</strong> ပေးရန်ကျန် အကြိုငွေ အားလုံး = ၀ ကျပ် ဖြစ်သွားပါမည်။</span>
+                <span><strong>ကုန်ပစ္စည်းပေးသွင်းသူ အကြိုငွေ (Supplier Advance):</strong> ပေးရန်ကျန် အကြိုငွေ အားလုံး = ၀ ကျပ် ဖြစ်သွားပါမည်။</span>
               </li>
               <li className="flex items-start gap-2 text-emerald-800 font-medium">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -91,7 +91,7 @@ export const ZeroSettingsConfirmModal: React.FC<ZeroSettingsConfirmModalProps> =
               </li>
               <li className="flex items-start gap-2 text-blue-900 font-medium pt-1 border-t border-slate-200">
                 <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                <span><strong>ထိန်းသိမ်းပေးထားမည့်အရာ:</strong> ဆိုင်အမည်၊ ပိုင်ရှင်အမည်၊ ဖုန်း၊ ကုန်ပစ္စည်းအမည် ၁၅ မျိုးနှင့် ရက်လုပ်သူ/ကုန်သည်အမည်များကို ပြန်ရိုက်စရာမလိုဘဲ အသင့်သုံးနိုင်ရန် ဆက်လက်ထားရှိပေးပါမည်။</span>
+                <span><strong>ထိန်းသိမ်းပေးထားမည့်အရာ:</strong> ဆိုင်အမည်၊ ပိုင်ရှင်အမည်၊ ဖုန်း၊ ကုန်ပစ္စည်းအမည် ၁၅ မျိုးနှင့် ကုန်ပစ္စည်းပေးသွင်းသူ/ကုန်သည်အမည်များကို ပြန်ရိုက်စရာမလိုဘဲ အသင့်သုံးနိုင်ရန် ဆက်လက်ထားရှိပေးပါမည်။</span>
               </li>
             </ul>
           </div>

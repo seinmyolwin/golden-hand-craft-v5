@@ -119,7 +119,7 @@ export interface TransactionRecord {
   materialItems?: CollectionItem[]; // ကုန်ကြမ်းပစ္စည်းများ
   rawMaterialItems?: RawMaterialItem[];
   materialTotalValue?: number; // ကုန်ကြမ်းတန်ဖိုး
-  cashRepaymentReceived?: number; // ရက်လုပ်သူမှ လာရောက်ဆပ်ငွေ
+  cashRepaymentReceived?: number; // ကုန်ပစ္စည်းပေးသွင်းသူမှ လာရောက်ဆပ်ငွေ
   paymentMethod?: PaymentMethod | string;
   remainingAdvanceBalance: number; // လက်ကျန် အကြိုငွေစာရင်း
   attachmentPhotos?: string[]; // ဓာတ်ပုံ သို့မဟုတ် ပြေစာ/လက်မှတ် ပုံများ

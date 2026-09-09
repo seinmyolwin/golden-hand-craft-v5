@@ -74,7 +74,7 @@ export const SmartInsightsModal: React.FC<SmartInsightsModalProps> = ({
                   100% Offline AI Logic
                 </span>
               </h3>
-              <p className="text-[11px] text-emerald-200">အရောင်းသွက်ကုန်ပစ္စည်းများ၊ ရက်လုပ်သူကြိုငွေနှင့် ရာသီအလိုက် အကြံပြုချက်</p>
+              <p className="text-[11px] text-emerald-200">အရောင်းသွက်ကုန်ပစ္စည်းများ၊ ကုန်ပစ္စည်းပေးသွင်းသူကြိုငွေနှင့် ရာသီအလိုက် အကြံပြုချက်</p>
             </div>
           </div>
           <button
@@ -117,7 +117,7 @@ export const SmartInsightsModal: React.FC<SmartInsightsModalProps> = ({
             </div>
 
             <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-sm">
-              <span className="text-[10px] font-bold text-slate-500 block">ရက်လုပ်သူ အကြိုငွေတင်</span>
+              <span className="text-[10px] font-bold text-slate-500 block">ပေးသွင်းသူ အကြိုငွေတင်</span>
               <span className="text-sm font-extrabold text-rose-700 block mt-0.5">
                 {totalAdvanceOutstanding.toLocaleString()} <span className="text-[10px] font-normal text-slate-500">Ks</span>
               </span>
@@ -162,7 +162,7 @@ export const SmartInsightsModal: React.FC<SmartInsightsModalProps> = ({
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h4 className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
                 <AlertTriangle className="w-4 h-4 text-amber-600" />
-                <span>ရက်လုပ်သူ အကြိုငွေစောင့်ကြည့်မှု (Advance Balance Watchlist)</span>
+                <span>ကုန်ပစ္စည်းပေးသွင်းသူ အကြိုငွေစောင့်ကြည့်မှု (Advance Balance Watchlist)</span>
               </h4>
               <span className="text-[10px] text-rose-600 font-semibold">{highRiskSuppliers.length} ဦး</span>
             </div>
@@ -192,7 +192,7 @@ export const SmartInsightsModal: React.FC<SmartInsightsModalProps> = ({
             ) : (
               <div className="p-3 bg-emerald-50 text-emerald-800 rounded-lg text-xs flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>ရက်လုပ်သူအားလုံးတွင် မြင့်မားသော အကြိုငွေတင်ကျန်မှု မရှိပါ။</span>
+                <span>ကုန်ပစ္စည်းပေးသွင်းသူအားလုံးတွင် မြင့်မားသော အကြိုငွေတင်ကျန်မှု မရှိပါ။</span>
               </div>
             )}
           </div>
@@ -211,7 +211,7 @@ export const SmartInsightsModal: React.FC<SmartInsightsModalProps> = ({
                 <strong>ပုဂံဘုရားဖူးရာသီ (နိုဝင်ဘာ-ဖေဖော်ဝါရီ):</strong> ခရီးသွားအမှတ်တရပစ္စည်းများ (ဝါးခမောက်၊ အလှဆင်ယပ်တောင်၊ ယွန်းပန်းကန်ပြား) အရောင်းသွက်တတ်ပါသည်။
               </li>
               <li>
-                <strong>ကုန်ကြမ်းရာသီ (မိုးနှောင်း-ဆောင်းဦး):</strong> မျှင်ဝါး၊ ဝါးပိုးဝါးနှင့် ကြိမ်အချောနှီးများ ဈေးကောင်းခိုက် ကုန်ကြမ်းကြိုထုတ်ပေးထားပါက ရက်လုပ်သူများ အလုပ်မပြတ်အောင် ထိန်းထားနိုင်ပါသည်။
+                <strong>ကုန်ကြမ်းရာသီ (မိုးနှောင်း-ဆောင်းဦး):</strong> မျှင်ဝါး၊ ဝါးပိုးဝါးနှင့် ကြိမ်အချောနှီးများ ဈေးကောင်းခိုက် ကုန်ကြမ်းကြိုထုတ်ပေးထားပါက ကုန်ပစ္စည်းပေးသွင်းသူများ အလုပ်မပြတ်အောင် ထိန်းထားနိုင်ပါသည်။
               </li>
             </ul>
           </div>

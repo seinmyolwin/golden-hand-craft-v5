@@ -26,7 +26,7 @@ export const INITIAL_SUPPLIERS: Supplier[] = [
     name: 'ဦးဘတင်',
     phone: '09-450123456',
     village: 'ကျောက်ပန်းတောင်းရွာ',
-    notes: 'ကွမ်းအစ် အဓိက ရက်လုပ်သူ',
+    notes: 'ကွမ်းအစ် အဓိက ပေးသွင်းသူ',
     initialAdvance: 0,
     currentAdvanceBalance: 0,
     totalGoodsValueDelivered: 0,
@@ -82,7 +82,7 @@ export const INITIAL_SUPPLIERS: Supplier[] = [
     name: 'ဒေါ်စန်းနွယ်',
     phone: '09-960778899',
     village: 'ညောင်ဦးအရှေ့ရွာ',
-    notes: 'လက်ဖက်အုပ် ရက်လုပ်သူ',
+    notes: 'လက်ဖက်အုပ် ပေးသွင်းသူ',
     initialAdvance: 0,
     currentAdvanceBalance: 0,
     totalGoodsValueDelivered: 0,
@@ -202,14 +202,14 @@ export function generate100SampleSuppliers(): Supplier[] {
   ];
 
   const notesList = [
-    'ကွမ်းအစ် ရက်လုပ်သူ',
-    'ဆွမ်းအုပ် ရက်လုပ်သူ',
-    'ကြိမ်တောင်း ရက်လုပ်သူ',
-    'ဝါးခမောက် ရက်လုပ်သူ',
-    'ဝါးဗန်း ရက်လုပ်သူ',
-    'ယပ်တောင် ရက်လုပ်သူ',
-    'လက်ဖက်အုပ် ရက်လုပ်သူ',
-    'ဝါးနှီးခြင်း ရက်လုပ်သူ',
+    'ကွမ်းအစ် ပေးသွင်းသူ',
+    'ဆွမ်းအုပ် ပေးသွင်းသူ',
+    'ကြိမ်တောင်း ပေးသွင်းသူ',
+    'ဝါးခမောက် ပေးသွင်းသူ',
+    'ဝါးဗန်း ပေးသွင်းသူ',
+    'ယပ်တောင် ပေးသွင်းသူ',
+    'လက်ဖက်အုပ် ပေးသွင်းသူ',
+    'ဝါးနှီးခြင်း ပေးသွင်းသူ',
   ];
 
   const generated: Supplier[] = [...INITIAL_SUPPLIERS];

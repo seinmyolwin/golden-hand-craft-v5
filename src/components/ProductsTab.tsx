@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Product } from '../types';
 import { formatMMK, formatNumberOnly } from '../utils/storage';
 import {
@@ -11,6 +11,7 @@ import {
   Tag,
   DollarSign,
   Layers,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 interface ProductsTabProps {
@@ -18,6 +19,7 @@ interface ProductsTabProps {
   onAddProduct: (product: Product) => void;
   onUpdateProduct: (product: Product) => void;
   onDeleteProduct?: (productId: string) => void;
+  onOpenExcelImport?: () => void;
 }
 
 export const ProductsTab: React.FC<ProductsTabProps> = ({
@@ -25,9 +27,11 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
   onAddProduct,
   onUpdateProduct,
   onDeleteProduct,
+  onOpenExcelImport,
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [displayLimit, setDisplayLimit] = useState<number>(36);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -55,6 +59,11 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
       return matchesSearch && matchesCategory;
     });
   }, [products, searchQuery, selectedCategory]);
+
+  // Reset display limit when filter changes for instant high performance
+  useEffect(() => {
+    setDisplayLimit(36);
+  }, [searchQuery, selectedCategory]);
 
   const handleOpenAdd = () => {
     setEditingProduct(null);
@@ -137,14 +146,26 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleOpenAdd}
-          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
-        >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
-          <span>+ ပစ္စည်းအသစ် ထည့်သွင်းမည်</span>
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {onOpenExcelImport && (
+            <button
+              type="button"
+              onClick={onOpenExcelImport}
+              className="px-3.5 py-2 bg-emerald-800/80 hover:bg-emerald-700 text-emerald-200 border border-emerald-600/60 text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+              <span>Excel ဖြင့် သွင်းမည်</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleOpenAdd}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>+ ပစ္စည်းအသစ် ထည့်သွင်းမည်</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter & Search Bar */}
@@ -193,7 +214,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
 
       {/* Products Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {filteredProducts.map((product) => (
+        {filteredProducts.slice(0, displayLimit).map((product) => (
           <div
             key={product.id}
             className="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs hover:border-emerald-300 transition-all flex flex-col justify-between"
@@ -262,6 +283,31 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
         ))}
       </div>
 
+      {/* Pagination Controls for Large Scale Datasets */}
+      {filteredProducts.length > displayLimit && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-white rounded-xl border border-slate-200 mt-2 text-xs">
+          <span className="text-slate-600">
+            စုစုပေါင်း <strong>{filteredProducts.length}</strong> မျိုးအနက် <strong>{displayLimit}</strong> မျိုး ပြသထားပါသည်
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setDisplayLimit((prev) => prev + 36)}
+              className="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded-lg cursor-pointer transition-colors shadow-2xs"
+            >
+              နောက်ထပ် ၃၆ မျိုး ကြည့်မည် (+36)
+            </button>
+            <button
+              type="button"
+              onClick={() => setDisplayLimit(filteredProducts.length)}
+              className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg cursor-pointer transition-colors"
+            >
+              အားလုံးကြည့်မည် ({filteredProducts.length})
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Add / Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
@@ -327,8 +373,10 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                     min="0"
                     step="any"
                     value={defaultPrice === 0 ? '' : defaultPrice}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
+                      const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
+                      const val = cleanStr === '' ? 0 : parseInt(cleanStr, 10);
                       const price = isNaN(val) ? 0 : Math.max(0, val);
                       setDefaultPrice(price);
                       if (!editingProduct) {
@@ -348,8 +396,10 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                     min="0"
                     step="any"
                     value={defaultWholesalePrice === 0 ? '' : defaultWholesalePrice}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
+                      const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
+                      const val = cleanStr === '' ? 0 : parseInt(cleanStr, 10);
                       setDefaultWholesalePrice(isNaN(val) ? 0 : Math.max(0, val));
                     }}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-bold text-blue-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -366,8 +416,10 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                     type="number"
                     min="0"
                     value={openingStock === 0 ? '' : openingStock}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
+                      const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
+                      const val = cleanStr === '' ? 0 : parseInt(cleanStr, 10);
                       setOpeningStock(isNaN(val) ? 0 : Math.max(0, val));
                     }}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg"
@@ -381,8 +433,10 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                     type="number"
                     min="1"
                     value={minStockAlert === 0 ? '' : minStockAlert}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
+                      const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
+                      const val = cleanStr === '' ? 0 : parseInt(cleanStr, 10);
                       setMinStockAlert(isNaN(val) ? 0 : Math.max(0, val));
                     }}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg"

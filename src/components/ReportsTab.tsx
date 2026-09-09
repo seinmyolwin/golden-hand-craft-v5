@@ -166,7 +166,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({
             {formatMMK(stats.goodsCollectedValue)}
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
-            ရက်လုပ်သူများထံ ပေးသွင်းကုန်တန်ဖိုး
+            ကုန်ပစ္စည်းပေးသွင်းသူများထံ ပေးသွင်းကုန်တန်ဖိုး
           </p>
         </div>
 
@@ -229,7 +229,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({
               <strong className="text-amber-700">{formatMMK(stats.newAdvanceGiven)}</strong>
             </div>
             <div className="flex justify-between py-1.5">
-              <span className="text-slate-600">ရက်လုပ်သူသို့ လက်ငင်းရှင်းငွေ:</span>
+              <span className="text-slate-600">ကုန်ပစ္စည်းပေးသွင်းသူသို့ လက်ငင်းရှင်းငွေ:</span>
               <strong className="text-blue-700">{formatMMK(stats.cashPaidToSuppliers)}</strong>
             </div>
           </div>

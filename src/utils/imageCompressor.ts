@@ -8,6 +8,7 @@ export interface CompressionOptions {
   maxHeight?: number;
   quality?: number;
   mimeType?: 'image/webp' | 'image/jpeg';
+  outputFormat?: 'image/webp' | 'image/jpeg';
 }
 
 export async function compressImageFile(
@@ -18,7 +19,7 @@ export async function compressImageFile(
     maxWidth = 1000,
     maxHeight = 1000,
     quality = 0.72,
-    mimeType = 'image/webp',
+    mimeType = options.mimeType || options.outputFormat || 'image/webp',
   } = options;
 
   return new Promise((resolve, reject) => {

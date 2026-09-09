@@ -130,7 +130,7 @@ export const UnifiedHistoryTab: React.FC<UnifiedHistoryTabProps> = ({
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
-              placeholder="ဘောင်ချာနံပါတ် / ရက်လုပ်သူ / ကုန်သည်အမည် / ရွာ / မြို့နယ်..."
+              placeholder="ဘောင်ချာနံပါတ် / ကုန်ပစ္စည်းပေးသွင်းသူ / ကုန်သည်အမည် / ရွာ / မြို့နယ်..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"

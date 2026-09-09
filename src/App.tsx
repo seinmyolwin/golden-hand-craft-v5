@@ -47,6 +47,7 @@ import {
   saveStoredBackupReminderSettings,
   getStoredRecoverySnapshots,
   createAutoRecoverySnapshot,
+  computeAllProductsStock,
   getTodayDateString,
   getCurrentTimeString,
 } from './utils/storage';
@@ -88,6 +89,7 @@ import { ZapyaTransferModal } from './components/ZapyaTransferModal';
 import { UserGuideModal } from './components/UserGuideModal';
 import { ZeroSettingsConfirmModal } from './components/ZeroSettingsConfirmModal';
 import { LowStockAlertModal } from './components/LowStockAlertModal';
+import { ExcelImportModal, ExcelImportTarget } from './components/ExcelImportModal';
 import { getCleanZeroData, getFullDemoData } from './data/sampleDemoData';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -200,6 +202,8 @@ export default function App() {
   const [isUserGuideOpen, setIsUserGuideOpen] = useState<boolean>(false);
   const [isZeroResetModalOpen, setIsZeroResetModalOpen] = useState<boolean>(false);
   const [isLowStockAlertModalOpen, setIsLowStockAlertModalOpen] = useState<boolean>(false);
+  const [isExcelImportOpen, setIsExcelImportOpen] = useState<boolean>(false);
+  const [excelImportTarget, setExcelImportTarget] = useState<ExcelImportTarget>('PRODUCTS');
 
   // New Notification & Action Prompts
   const [notificationOrder, setNotificationOrder] = useState<MerchantOrder | null>(null);
@@ -333,12 +337,12 @@ export default function App() {
   // Suppliers CRUD
   const handleAddSupplier = useCallback((s: Supplier) => {
     setSuppliers((prev) => [s, ...prev]);
-    logAction('ရက်လုပ်သူ အသစ်ထည့်သွင်းခြင်း', `${s.name} (${s.village})`, 'SUPPLIER', s.id);
+    logAction('ကုန်ပစ္စည်းပေးသွင်းသူ အသစ်ထည့်သွင်းခြင်း', `${s.name} (${s.village})`, 'SUPPLIER', s.id);
   }, [logAction]);
 
   const handleUpdateSupplier = useCallback((s: Supplier) => {
     setSuppliers((prev) => prev.map((item) => (item.id === s.id ? s : item)));
-    logAction('ရက်လုပ်သူ ပြင်ဆင်ခြင်း', `${s.name} (${s.village})`, 'SUPPLIER', s.id);
+    logAction('ကုန်ပစ္စည်းပေးသွင်းသူ ပြင်ဆင်ခြင်း', `${s.name} (${s.village})`, 'SUPPLIER', s.id);
   }, [logAction]);
 
   const handleDeleteSupplier = useCallback((supplierId: string) => {
@@ -357,7 +361,7 @@ export default function App() {
 
     setDeletedItems((prev) => [softDeleted, ...prev]);
     setSuppliers((prev) => prev.filter((item) => item.id !== supplierId));
-    logAction('ရက်လုပ်သူ ဖျက်ခြင်း (အမှိုက်ပုံး)', `${s.name} (${s.village})`, 'SUPPLIER', s.id);
+    logAction('ကုန်ပစ္စည်းပေးသွင်းသူ ဖျက်ခြင်း (အမှိုက်ပုံး)', `${s.name} (${s.village})`, 'SUPPLIER', s.id);
   }, [suppliers, logAction]);
 
   // Merchants CRUD
@@ -695,6 +699,72 @@ export default function App() {
     alert('အချက်အလက်များ အောင်မြင်စွာ ပြန်လည်သွင်းယူပြီးပါပြီ');
   }, [logAction]);
 
+  // Excel Bulk Import Handlers
+  const handleOpenExcelImport = useCallback((target: ExcelImportTarget = 'PRODUCTS') => {
+    setExcelImportTarget(target);
+    setIsExcelImportOpen(true);
+  }, []);
+
+  const handleImportProducts = useCallback((newProducts: Product[]) => {
+    setProducts((prev) => {
+      const existingMap = new Map(prev.map((p) => [p.name.trim().toLowerCase(), p]));
+      const updated = [...prev];
+      newProducts.forEach((np) => {
+        const key = np.name.trim().toLowerCase();
+        if (existingMap.has(key)) {
+          const idx = updated.findIndex((p) => p.name.trim().toLowerCase() === key);
+          if (idx >= 0) {
+            updated[idx] = { ...updated[idx], ...np, id: updated[idx].id };
+          }
+        } else {
+          updated.push(np);
+        }
+      });
+      return updated;
+    });
+    logAction('Excel Bulk Import', `ကုန်ပစ္စည်း ${newProducts.length} မျိုး သွင်းယူခြင်း`, 'PRODUCTS');
+  }, [logAction]);
+
+  const handleImportSuppliers = useCallback((newSuppliers: Supplier[]) => {
+    setSuppliers((prev) => {
+      const existingMap = new Map(prev.map((s) => [s.name.trim().toLowerCase(), s]));
+      const updated = [...prev];
+      newSuppliers.forEach((ns) => {
+        const key = ns.name.trim().toLowerCase();
+        if (existingMap.has(key)) {
+          const idx = updated.findIndex((s) => s.name.trim().toLowerCase() === key);
+          if (idx >= 0) {
+            updated[idx] = { ...updated[idx], ...ns, id: updated[idx].id };
+          }
+        } else {
+          updated.push(ns);
+        }
+      });
+      return updated;
+    });
+    logAction('Excel Bulk Import', `ကုန်ပစ္စည်းပေးသွင်းသူ ${newSuppliers.length} ဦး သွင်းယူခြင်း`, 'SUPPLIER');
+  }, [logAction]);
+
+  const handleImportMerchants = useCallback((newMerchants: Merchant[]) => {
+    setMerchants((prev) => {
+      const existingMap = new Map(prev.map((m) => [m.name.trim().toLowerCase(), m]));
+      const updated = [...prev];
+      newMerchants.forEach((nm) => {
+        const key = nm.name.trim().toLowerCase();
+        if (existingMap.has(key)) {
+          const idx = updated.findIndex((m) => m.name.trim().toLowerCase() === key);
+          if (idx >= 0) {
+            updated[idx] = { ...updated[idx], ...nm, id: updated[idx].id };
+          }
+        } else {
+          updated.push(nm);
+        }
+      });
+      return updated;
+    });
+    logAction('Excel Bulk Import', `ကုန်သည် ${newMerchants.length} ဦး သွင်းယူခြင်း`, 'MERCHANT');
+  }, [logAction]);
+
   // App Lock Controls
   const handleUnlock = useCallback(() => {
     setIsUnlocked(true);
@@ -815,33 +885,24 @@ export default function App() {
     [products, suppliers, transactions, merchants, sales, orders, shopSettings, stockAdjustments, logAction]
   );
 
-  // Compute Inventory Stock for NewSaleModal
+  // Compute Accurate Inventory Stock using computeAllProductsStock
   const inventoryStock = useMemo(() => {
-    return products.map((prod) => {
-      let inbound = 0;
-      let outbound = 0;
-
-      transactions.forEach((tx) => {
-        (tx.items || []).forEach((it) => {
-          if (it.productId === prod.id) inbound += it.quantity || 0;
-        });
-      });
-
-      sales.forEach((s) => {
-        (s.items || []).forEach((it) => {
-          if (it.productId === prod.id) outbound += it.quantity || 0;
-        });
-      });
-
-      const currentStock = (prod.openingStock || 0) + inbound - outbound;
-      return {
-        product: prod,
-        inbound,
-        outbound,
-        currentStock,
-      };
-    });
-  }, [products, transactions, sales]);
+    const stats = computeAllProductsStock(
+      products || [],
+      transactions || [],
+      sales || [],
+      stockAdjustments || [],
+      [],
+      [],
+      peerTrades || []
+    );
+    return stats.map((stat) => ({
+      product: stat.product,
+      inbound: stat.totalInflow,
+      outbound: stat.totalOutflow,
+      currentStock: stat.currentStock,
+    }));
+  }, [products, transactions, sales, stockAdjustments, peerTrades]);
 
   // Tab Badge & Navigation Counts
   const todayInboundCount = useMemo(() => {
@@ -852,9 +913,19 @@ export default function App() {
     return sales.filter((s) => s.date === selectedDate).length;
   }, [sales, selectedDate]);
 
-  const lowStockAlertCount = useMemo(() => {
-    return inventoryStock.filter((i) => i.currentStock <= (i.product.minStockAlert || 5)).length;
+  const lowStockProductsList = useMemo(() => {
+    return inventoryStock
+      .filter((i) => i.currentStock <= (i.product.minStockAlert || 5))
+      .map((i) => ({
+        product: i.product,
+        currentStock: i.currentStock,
+        minStockAlert: i.product.minStockAlert || 5,
+      }));
   }, [inventoryStock]);
+
+  const lowStockAlertCount = useMemo(() => {
+    return lowStockProductsList.length;
+  }, [lowStockProductsList]);
 
   const pendingOrdersCount = useMemo(() => {
     return orders.filter((o) => o.status === 'PENDING').length;
@@ -922,6 +993,8 @@ export default function App() {
           todayInboundCount={todayInboundCount}
           todaySalesCount={todaySalesCount}
           pendingOrdersCount={pendingOrdersCount}
+          lowStockCount={lowStockAlertCount}
+          onOpenLowStockAlert={() => setIsLowStockAlertModalOpen(true)}
           onNavigateToOrders={() => setActiveTab('orders')}
           onOpenEditProfile={() => setIsShopProfileModalOpen(true)}
           onOpenBackup={() => setActiveTab('backup')}
@@ -1019,6 +1092,7 @@ export default function App() {
               onViewMerchantHistory={() => {}}
               onOpenDeletedHistory={() => setIsDeletedHistoryModalOpen(true)}
               deletedRecordsCount={deletedItems.filter((d) => d.type === 'MERCHANT').length}
+              onOpenExcelImport={() => handleOpenExcelImport('MERCHANTS')}
             />
           )}
 
@@ -1034,6 +1108,7 @@ export default function App() {
               onViewSupplierLedger={handleViewSupplierLedger}
               onOpenDeletedHistory={() => setIsDeletedHistoryModalOpen(true)}
               deletedRecordsCount={deletedItems.filter((d) => d.type === 'SUPPLIER').length}
+              onOpenExcelImport={() => handleOpenExcelImport('SUPPLIERS')}
             />
           )}
 
@@ -1043,6 +1118,7 @@ export default function App() {
               onAddProduct={handleAddProduct}
               onUpdateProduct={handleUpdateProduct}
               onDeleteProduct={handleDeleteProduct}
+              onOpenExcelImport={() => handleOpenExcelImport('PRODUCTS')}
             />
           )}
 
@@ -1093,6 +1169,7 @@ export default function App() {
               onOpenZapyaModal={() => setIsZapyaModalOpen(true)}
               onOpenZeroSettings={() => setIsZeroResetModalOpen(true)}
               onLoadDemoData={handleLoadDemoData}
+              onOpenExcelImport={() => handleOpenExcelImport('PRODUCTS')}
               onOpenUserGuide={() => setIsUserGuideOpen(true)}
               onRestoreData={handleRestoreData}
               onAddSupplier={handleAddSupplier}
@@ -1245,6 +1322,31 @@ export default function App() {
           onClose={() => setIsZeroResetModalOpen(false)}
           onConfirmZeroReset={handleConfirmZeroReset}
           onLoadDemoData={handleLoadDemoData}
+        />
+
+        <LowStockAlertModal
+          isOpen={isLowStockAlertModalOpen}
+          onClose={() => setIsLowStockAlertModalOpen(false)}
+          lowStockProducts={lowStockProductsList}
+          onOpenNewEntryWithProduct={() => {
+            handleOpenNewEntry();
+          }}
+          onGoToInventory={() => {
+            setActiveTab('inventory');
+            setIsLowStockAlertModalOpen(false);
+          }}
+        />
+
+        <ExcelImportModal
+          isOpen={isExcelImportOpen}
+          onClose={() => setIsExcelImportOpen(false)}
+          defaultTarget={excelImportTarget}
+          existingProducts={products}
+          existingSuppliers={suppliers}
+          existingMerchants={merchants}
+          onImportProducts={handleImportProducts}
+          onImportSuppliers={handleImportSuppliers}
+          onImportMerchants={handleImportMerchants}
         />
       </div>
     </ErrorBoundary>

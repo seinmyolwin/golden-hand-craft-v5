@@ -77,7 +77,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     },
     {
       id: 'suppliers' as ActiveTab,
-      label: 'ရက်လုပ်သူ',
+      label: 'ပေးသွင်းသူ',
       sublabel: 'Suppliers',
       icon: Users,
     },

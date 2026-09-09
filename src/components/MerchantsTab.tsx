@@ -23,6 +23,7 @@ import {
   ArrowUpRight,
   TrendingUp,
   CheckCircle2,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 interface MerchantsTabProps {
@@ -35,6 +36,7 @@ interface MerchantsTabProps {
   onDeleteMerchant?: (merchantId: string) => void;
   onOpenDeletedHistory?: () => void;
   deletedRecordsCount?: number;
+  onOpenExcelImport?: () => void;
 }
 
 export const MerchantsTab: React.FC<MerchantsTabProps> = ({
@@ -47,13 +49,20 @@ export const MerchantsTab: React.FC<MerchantsTabProps> = ({
   onDeleteMerchant,
   onOpenDeletedHistory,
   deletedRecordsCount = 0,
+  onOpenExcelImport,
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedTown, setSelectedTown] = useState<string>('all');
   const [balanceFilter, setBalanceFilter] = useState<'all' | 'has_debt' | 'cleared'>('all');
+  const [displayLimit, setDisplayLimit] = useState<number>(36);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [editingMerchant, setEditingMerchant] = useState<Merchant | null>(null);
+
+  // Reset display limit when filter changes for instant high performance
+  React.useEffect(() => {
+    setDisplayLimit(36);
+  }, [searchQuery, selectedTown, balanceFilter]);
 
   const [isSettleModalOpen, setIsSettleModalOpen] = useState<boolean>(false);
   const [settlingMerchant, setSettlingMerchant] = useState<Merchant | null>(null);
@@ -228,6 +237,16 @@ export const MerchantsTab: React.FC<MerchantsTabProps> = ({
               <span>အမှိုက်ပုံး ({deletedRecordsCount})</span>
             </button>
           )}
+          {onOpenExcelImport && (
+            <button
+              type="button"
+              onClick={onOpenExcelImport}
+              className="px-3.5 py-2 bg-blue-900/80 hover:bg-blue-800 text-blue-200 border border-blue-700/60 text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-blue-400" />
+              <span>Excel ဖြင့် သွင်းမည်</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={handleOpenAdd}
@@ -383,7 +402,7 @@ export const MerchantsTab: React.FC<MerchantsTabProps> = ({
 
       {/* Merchants Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {filteredMerchants.map((merchant) => {
+        {filteredMerchants.slice(0, displayLimit).map((merchant) => {
           const hasDebt = (merchant.currentReceivableBalance || 0) > 0;
           const merchantSalesCount = sales.filter((s) => s.merchantId === merchant.id).length;
 
@@ -523,6 +542,31 @@ export const MerchantsTab: React.FC<MerchantsTabProps> = ({
           );
         })}
       </div>
+
+      {/* Pagination Controls for Large Scale Datasets */}
+      {filteredMerchants.length > displayLimit && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-white rounded-xl border border-slate-200 mt-2 text-xs">
+          <span className="text-slate-600">
+            စုစုပေါင်း <strong>{filteredMerchants.length}</strong> ဦးအနက် <strong>{displayLimit}</strong> ဦး ပြသထားပါသည်
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setDisplayLimit((prev) => prev + 36)}
+              className="px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white font-bold rounded-lg cursor-pointer transition-colors shadow-2xs"
+            >
+              နောက်ထပ် ၃၆ ဦး ကြည့်မည် (+36)
+            </button>
+            <button
+              type="button"
+              onClick={() => setDisplayLimit(filteredMerchants.length)}
+              className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg cursor-pointer transition-colors"
+            >
+              အားလုံးကြည့်မည် ({filteredMerchants.length})
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Add / Edit Merchant Modal */}
       {isAddModalOpen && (

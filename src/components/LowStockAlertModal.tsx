@@ -30,7 +30,7 @@ export const LowStockAlertModal: React.FC<LowStockAlertModalProps> = ({
             </div>
             <div>
               <h3 className="font-extrabold text-sm sm:text-base text-white flex items-center gap-1.5">
-                <span>နောက်ထပ် ဦးစားပေးဝယ်ယူ/ရက်လုပ်ရန် သတိပေးချက်</span>
+                <span>နောက်ထပ် ဦးစားပေးဝယ်ယူ/မှာယူရန် သတိပေးချက်</span>
                 <span className="text-[10px] bg-red-600 text-white font-bold px-2 py-0.5 rounded-full">
                   {lowStockProducts.length} မျိုး
                 </span>
@@ -52,7 +52,7 @@ export const LowStockAlertModal: React.FC<LowStockAlertModalProps> = ({
         {/* List of Low Stock Products */}
         <div className="p-4 space-y-3 text-xs max-h-[60vh] overflow-y-auto">
           <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 leading-relaxed">
-            အောက်ပါ ကုန်ပစ္စည်းများသည် ဆိုင်တွင် သတ်မှတ်ထားသော အနည်းဆုံးလက်ကျန် (Min Stock) ထက် နည်းပါးနေပါသဖြင့် ရက်လုပ်သူများထံမှ အမြန်ဆုံး ထပ်မံကုန်သိမ်း/အပ်နှံရန် လိုအပ်ပါသည်:
+            အောက်ပါ ကုန်ပစ္စည်းများသည် ဆိုင်တွင် သတ်မှတ်ထားသော အနည်းဆုံးလက်ကျန် (Min Stock) ထက် နည်းပါးနေပါသဖြင့် ကုန်ပစ္စည်းပေးသွင်းသူများထံမှ အမြန်ဆုံး ထပ်မံကုန်သိမ်း/အပ်နှံရန် လိုအပ်ပါသည်:
           </div>
 
           <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50">
@@ -93,7 +93,7 @@ export const LowStockAlertModal: React.FC<LowStockAlertModalProps> = ({
                         className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
                       >
                         <ArrowDownLeft className="w-3.5 h-3.5" />
-                        <span>ရက်လုပ်သူထံ ကုန်သိမ်းမည်</span>
+                        <span>ပေးသွင်းသူထံ ကုန်သိမ်းမည်</span>
                       </button>
                     )}
                   </div>

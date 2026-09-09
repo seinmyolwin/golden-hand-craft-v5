@@ -269,9 +269,11 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
                         min="1"
                         placeholder="အရေအတွက်"
                         value={item.quantity === 0 ? '' : item.quantity}
+                        onFocus={(e) => e.target.select()}
                         onChange={(e) => {
+                          const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
                           const updated = [...items];
-                          updated[idx].quantity = parseInt(e.target.value, 10) || 0;
+                          updated[idx].quantity = cleanStr === '' ? 0 : parseInt(cleanStr, 10) || 0;
                           setItems(updated);
                         }}
                         className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold"
@@ -284,9 +286,11 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
                         min="0"
                         placeholder="ရောင်းစျေး"
                         value={item.unitPrice === 0 ? '' : item.unitPrice}
+                        onFocus={(e) => e.target.select()}
                         onChange={(e) => {
+                          const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
                           const updated = [...items];
-                          updated[idx].unitPrice = parseInt(e.target.value, 10) || 0;
+                          updated[idx].unitPrice = cleanStr === '' ? 0 : parseInt(cleanStr, 10) || 0;
                           setItems(updated);
                         }}
                         className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-blue-900"
@@ -327,8 +331,10 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
                   min="0"
                   max={grandTotal}
                   value={cashPaidByMerchant === 0 ? '' : cashPaidByMerchant}
+                  onFocus={(e) => e.target.select()}
                   onChange={(e) => {
-                    const val = parseInt(e.target.value, 10);
+                    const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
+                    const val = cleanStr === '' ? 0 : parseInt(cleanStr, 10);
                     setCashPaidByMerchant(isNaN(val) ? 0 : Math.max(0, val));
                   }}
                   className="w-full px-3 py-1.5 bg-white border border-blue-300 rounded-lg text-xs font-bold text-emerald-800"

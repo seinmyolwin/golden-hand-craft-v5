@@ -14,7 +14,7 @@ export interface ThermalReceiptData {
   date: string;
   time: string;
   personName: string; // Supplier or Merchant
-  personLabel: string; // 'ရက်လုပ်သူ' or 'ကုန်သည်'
+  personLabel: string; // 'ကုန်ပစ္စည်းပေးသွင်းသူ' or 'ကုန်သည်'
   townOrVillage?: string;
   items: Array<{
     name: string;

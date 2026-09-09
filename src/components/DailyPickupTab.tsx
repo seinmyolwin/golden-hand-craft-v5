@@ -159,7 +159,7 @@ export const DailyPickupTab: React.FC<DailyPickupTabProps> = ({
               </h2>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              ရက်စွဲ - {selectedDate} (ရက်လုပ်သူ: {visitedSupplierIds.size} / {suppliers.length} ဦး သွားရောက်ပြီး)
+              ရက်စွဲ - {selectedDate} (ကုန်ပစ္စည်းပေးသွင်းသူ: {visitedSupplierIds.size} / {suppliers.length} ဦး သွားရောက်ပြီး)
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -393,7 +393,7 @@ export const DailyPickupTab: React.FC<DailyPickupTabProps> = ({
               <MapPin className="w-4 h-4 text-emerald-600" />
               <span>နယ်လှည့်ကုန်သိမ်းလမ်းကြောင်း ({routeSuppliers.length} ဦး)</span>
             </h3>
-            <p className="text-xs text-slate-500">ရွာအလိုက် ရက်လုပ်သူများထံ ကုန်သိမ်းရန် စာရင်း</p>
+            <p className="text-xs text-slate-500">ရွာအလိုက် ကုန်ပစ္စည်းပေးသွင်းသူများထံ ကုန်သိမ်းရန် စာရင်း</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -417,7 +417,7 @@ export const DailyPickupTab: React.FC<DailyPickupTabProps> = ({
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="ရက်လုပ်သူအမည် / ကုဒ်နံပါတ်ဖြင့် ရှာမည်..."
+            placeholder="ကုန်ပစ္စည်းပေးသွင်းသူအမည် / ကုဒ်နံပါတ်ဖြင့် ရှာမည်..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:bg-white"

@@ -26,6 +26,7 @@ import {
   ArrowUpRight,
   TrendingDown,
   CreditCard,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 interface SuppliersTabProps {
@@ -40,6 +41,7 @@ interface SuppliersTabProps {
   onAddTransaction?: (tx: TransactionRecord) => void;
   onOpenDeletedHistory?: () => void;
   deletedRecordsCount?: number;
+  onOpenExcelImport?: () => void;
 }
 
 export const SuppliersTab: React.FC<SuppliersTabProps> = ({
@@ -54,13 +56,20 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
   onAddTransaction,
   onOpenDeletedHistory,
   deletedRecordsCount = 0,
+  onOpenExcelImport,
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedVillage, setSelectedVillage] = useState<string>('all');
   const [balanceFilter, setBalanceFilter] = useState<'all' | 'has_advance' | 'cleared'>('all');
+  const [displayLimit, setDisplayLimit] = useState<number>(36);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+
+  // Reset display limit when filter changes for instant high performance
+  useEffect(() => {
+    setDisplayLimit(36);
+  }, [searchQuery, selectedVillage, balanceFilter]);
 
   // Raw Material Credit State & Presets
   const [presets, setPresets] = useState<RawMaterialPreset[]>(() => getStoredRawMaterialPresets());
@@ -287,7 +296,7 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
       newAdvanceTaken: 0,
       netCashPaidToSupplier: 0,
       remainingAdvanceBalance: newBalance,
-      notes: repayNotes.trim() || `ရက်လုပ်သူမှ အကြိုငွေ ပြန်လည်ဆပ် (${repayMethod})`,
+      notes: repayNotes.trim() || `ကုန်ပစ္စည်းပေးသွင်းသူမှ အကြိုငွေ ပြန်လည်ဆပ် (${repayMethod})`,
     };
 
     const updatedSupplier: Supplier = {
@@ -318,13 +327,13 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                ရက်လုပ်သူများ စာရင်း
+                ကုန်ပစ္စည်းပေးသွင်းသူများ စာရင်း
                 <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700/50">
                   {suppliers.length} ဦး
                 </span>
               </h2>
               <p className="text-xs text-slate-300">
-                ရွာအလိုက် ရက်လုပ်သူများ၊ အကြိုငွေလက်ကျန်နှင့် ပစ္စည်းပေးသွင်းမှု
+                ရွာအလိုက် ကုန်ပစ္စည်းပေးသွင်းသူများ၊ အကြိုငွေလက်ကျန်နှင့် ပစ္စည်းပေးသွင်းမှု
               </p>
             </div>
           </div>
@@ -342,13 +351,23 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
               <span>အမှိုက်ပုံး ({deletedRecordsCount})</span>
             </button>
           )}
+          {onOpenExcelImport && (
+            <button
+              type="button"
+              onClick={onOpenExcelImport}
+              className="px-3.5 py-2 bg-emerald-800/80 hover:bg-emerald-700 text-emerald-200 border border-emerald-600/60 text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+              <span>Excel ဖြင့် သွင်းမည်</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={handleOpenAdd}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>+ ရက်လုပ်သူအသစ်</span>
+            <span>+ ပေးသွင်းသူအသစ်</span>
           </button>
           <button
             type="button"
@@ -404,7 +423,7 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
 
         <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 text-xs mb-1">
-            <span className="font-semibold">ရက်လုပ်သူ စုစုပေါင်း</span>
+            <span className="font-semibold">ကုန်ပစ္စည်းပေးသွင်းသူ စုစုပေါင်း</span>
             <Users className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="text-xl font-extrabold text-slate-900">
@@ -423,7 +442,7 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
-              placeholder="ရက်လုပ်သူအမည် / ရွာ / ဖုန်းနံပါတ်ဖြင့် ရှာမည်..."
+              placeholder="ကုန်ပစ္စည်းပေးသွင်းသူအမည် / ရွာ / ဖုန်းနံပါတ်ဖြင့် ရှာမည်..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -498,7 +517,7 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
 
       {/* Suppliers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {filteredSuppliers.map((supplier) => {
+        {filteredSuppliers.slice(0, displayLimit).map((supplier) => {
           const hasAdvance = (supplier.currentAdvanceBalance || 0) > 0;
           const supplierTxCount = transactions.filter((t) => t.supplierId === supplier.id).length;
 
@@ -539,7 +558,7 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
                       <button
                         type="button"
                         onClick={() => {
-                          if (confirm(`ရက်လုပ်သူ "${supplier.name}" (${supplier.village}) ကို အမှိုက်ပုံးသို့ ရွှေ့လိုပါသလား?\n\n(မှားဖျက်မိပါက အမှိုက်ပုံးမှ ပြန်လည်ရယူနိုင်ပါသည်)`)) {
+                          if (confirm(`ကုန်ပစ္စည်းပေးသွင်းသူ "${supplier.name}" (${supplier.village}) ကို အမှိုက်ပုံးသို့ ရွှေ့လိုပါသလား?\n\n(မှားဖျက်မိပါက အမှိုက်ပုံးမှ ပြန်လည်ရယူနိုင်ပါသည်)`)) {
                             onDeleteSupplier(supplier.id);
                           }
                         }}
@@ -646,6 +665,31 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
         })}
       </div>
 
+      {/* Pagination Controls for Large Scale Datasets */}
+      {filteredSuppliers.length > displayLimit && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-white rounded-xl border border-slate-200 mt-2 text-xs">
+          <span className="text-slate-600">
+            စုစုပေါင်း <strong>{filteredSuppliers.length}</strong> ဦးအနက် <strong>{displayLimit}</strong> ဦး ပြသထားပါသည်
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setDisplayLimit((prev) => prev + 36)}
+              className="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded-lg cursor-pointer transition-colors shadow-2xs"
+            >
+              နောက်ထပ် ၃၆ ဦး ကြည့်မည် (+36)
+            </button>
+            <button
+              type="button"
+              onClick={() => setDisplayLimit(filteredSuppliers.length)}
+              className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg cursor-pointer transition-colors"
+            >
+              အားလုံးကြည့်မည် ({filteredSuppliers.length})
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Add / Edit Supplier Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
@@ -654,7 +698,7 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-emerald-400" />
                 <h3 className="text-sm font-bold">
-                  {editingSupplier ? 'ရက်လုပ်သူ ပြင်ဆင်ခြင်း' : 'ရက်လုပ်သူအသစ် ထည့်သွင်းခြင်း'}
+                  {editingSupplier ? 'ကုန်ပစ္စည်းပေးသွင်းသူ ပြင်ဆင်ခြင်း' : 'ကုန်ပစ္စည်းပေးသွင်းသူအသစ် ထည့်သွင်းခြင်း'}
                 </h3>
               </div>
               <button
@@ -667,7 +711,7 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
             </div>
             <form onSubmit={handleSaveSupplier} className="p-4 space-y-3 text-xs">
               <div>
-                <label className="block text-slate-700 font-bold mb-1">ရက်လုပ်သူအမည် *</label>
+                <label className="block text-slate-700 font-bold mb-1">ကုန်ပစ္စည်းပေးသွင်းသူအမည် *</label>
                 <input
                   type="text"
                   placeholder="ဥပမာ - ဦးဘတင်"
@@ -711,8 +755,10 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
                     step="any"
                     placeholder="0"
                     value={initialAdvance === 0 ? '' : initialAdvance}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
+                      const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
+                      const val = cleanStr === '' ? 0 : parseInt(cleanStr, 10);
                       setInitialAdvance(isNaN(val) ? 0 : Math.max(0, val));
                     }}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -768,7 +814,7 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
             </div>
             <form onSubmit={handleConfirmRawMaterial} className="p-4 space-y-3.5 text-xs">
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-[11px] text-slate-500 block">ထုတ်ယူသူ ရက်လုပ်သူ</span>
+                <span className="text-[11px] text-slate-500 block">ထုတ်ယူသူ ကုန်ပစ္စည်းပေးသွင်းသူ</span>
                 <div className="text-base font-extrabold text-slate-900 mt-0.5">
                   {selectedSupplierForRaw.name} ({selectedSupplierForRaw.village})
                 </div>
@@ -1058,7 +1104,7 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
             <div className="px-4 py-3 bg-emerald-900 text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-emerald-400" />
-                <h3 className="text-sm font-bold">ရက်လုပ်သူ အကြိုငွေ ပြန်ဆပ်ခြင်း</h3>
+                <h3 className="text-sm font-bold">ကုန်ပစ္စည်းပေးသွင်းသူ အကြိုငွေ ပြန်ဆပ်ခြင်း</h3>
               </div>
               <button
                 type="button"
@@ -1070,7 +1116,7 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
             </div>
             <form onSubmit={handleConfirmRepayment} className="p-4 space-y-3.5 text-xs">
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-[11px] text-slate-500 block">ရက်လုပ်သူ</span>
+                <span className="text-[11px] text-slate-500 block">ကုန်ပစ္စည်းပေးသွင်းသူ</span>
                 <div className="text-base font-extrabold text-slate-900 mt-0.5">
                   {selectedSupplierForRepay.name} ({selectedSupplierForRepay.village})
                 </div>
@@ -1088,8 +1134,10 @@ export const SuppliersTab: React.FC<SuppliersTabProps> = ({
                   step="any"
                   max={selectedSupplierForRepay.currentAdvanceBalance || 0}
                   value={repayAmount === 0 ? '' : repayAmount}
+                  onFocus={(e) => e.target.select()}
                   onChange={(e) => {
-                    const val = parseInt(e.target.value, 10);
+                    const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
+                    const val = cleanStr === '' ? 0 : parseInt(cleanStr, 10);
                     setRepayAmount(isNaN(val) ? 0 : Math.max(0, val));
                   }}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-base font-extrabold text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"

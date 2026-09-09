@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Calendar,
   Plus,
@@ -57,6 +57,7 @@ interface HeaderProps {
   onOpenLowStockAlert?: () => void;
   onOpenInsights?: () => void;
   onOpenQRSync?: () => void;
+  isOnline?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -93,6 +94,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenLowStockAlert,
   onOpenInsights,
   onOpenQRSync,
+  isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true,
 }) => {
   const handleOpenEntry = onOpenNewEntry || onOpenNewSupplierCollection;
   const handleOpenSale = onOpenNewSale || onOpenNewMerchantSale;
@@ -102,18 +104,6 @@ export const Header: React.FC<HeaderProps> = ({
   const handleZapya = onOpenZapya || onOpenZapyaModal;
   const shopName = shopSettings?.shopName || 'ရွှေလက်ရာ';
   const tagline = shopSettings?.tagline || 'မြန်မာ့လက်မှု ယွန်းထည်နှင့် ဝါးနှီးလုပ်ငန်း';
-  const [isOnline, setIsOnline] = useState<boolean>(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
-
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
 
   return (
     <header className="sticky top-0 z-30 bg-emerald-700 text-white shadow-md border-b border-emerald-800">
@@ -285,7 +275,7 @@ export const Header: React.FC<HeaderProps> = ({
                 type="button"
                 onClick={onOpenInsights}
                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-800/90 hover:bg-teal-700 text-teal-100 border border-teal-400/50 shadow-xs cursor-pointer transition-all"
-                title="စမတ်သုံးသပ်ချက် - ရောင်းအားအကောင်းဆုံးနှင့် ရက်လုပ်သူကြိုငွေ စောင့်ကြည့်မှု"
+                title="စမတ်သုံးသပ်ချက် - ရောင်းအားအကောင်းဆုံးနှင့် ကုန်ပစ္စည်းပေးသွင်းသူကြိုငွေ စောင့်ကြည့်မှု"
               >
                 <TrendingUp className="w-3.5 h-3.5 text-teal-300" />
                 <span className="hidden md:inline whitespace-nowrap">သုံးသပ်ချက်</span>
