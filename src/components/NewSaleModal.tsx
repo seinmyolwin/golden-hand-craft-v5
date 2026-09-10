@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Merchant, Product, SaleRecord, SaleItem, PaymentMethod } from '../types';
-import { formatMMK, formatNumberOnly, getTodayDateString, getCurrentTimeString } from '../utils/storage';
+import {
+  formatMMK,
+  formatNumberOnly,
+  getTodayDateString,
+  getCurrentTimeString,
+  findPotentialDuplicateSale,
+  getStoredSales,
+  parseBilingualNumber,
+} from '../utils/storage';
 import {
   X,
   Plus,
@@ -64,6 +72,7 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
   const [driverOrContact, setDriverOrContact] = useState<string>('');
   const [driverPhone, setDriverPhone] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Keep merchantId valid and synchronized whenever modal opens or merchants list updates
   useEffect(() => {
@@ -181,7 +190,7 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentMerchant) return;
+    if (!currentMerchant || isSubmitting) return;
 
     const validItems: SaleItem[] = items
       .map((it) => {
@@ -198,6 +207,39 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
       })
       .filter((it): it is SaleItem => it !== null);
 
+    if (validItems.length === 0) {
+      alert('အနည်းဆုံး ရောင်းချမည့် ကုန်ပစ္စည်း ၁ မျိုး ထည့်သွင်းပေးပါ');
+      return;
+    }
+
+    // Duplicate Sale Check
+    const existingSales = getStoredSales();
+    const duplicate = findPotentialDuplicateSale(
+      {
+        merchantId: currentMerchant.id,
+        date: saleDate,
+        grandTotal,
+        items: validItems,
+        cashPaidByMerchant,
+      },
+      existingSales
+    );
+
+    if (duplicate) {
+      const confirmed = window.confirm(
+        `သတိပေးချက် - အလားတူ အရောင်းဘောင်ချာကို ယခင်က ထည့်သွင်းထားပြီးဖြစ်ပါသည်!\n\n` +
+        `• ယခင်ဘောင်ချာ: ${duplicate.voucherNo}\n` +
+        `• ရက်စွဲ: ${duplicate.date}\n` +
+        `• ဝယ်ယူသူကုန်သည်: ${duplicate.merchantName}\n` +
+        `• စုစုပေါင်းတန်ဖိုး: ${formatMMK(duplicate.grandTotal)}\n\n` +
+        `စာရင်းထပ်မံမဝင်စေရန် စစ်ဆေးပါ။ ဆက်လက်ထုတ်ယူလိုပါသလား?`
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
     const voucherNo = `SL-${Date.now().toString().slice(-6)}`;
 
     const newSale: SaleRecord = {
@@ -220,8 +262,12 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
       notes: notes.trim(),
     };
 
-    onSave(newSale);
-    onClose();
+    try {
+      onSave(newSale);
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -406,15 +452,15 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
                     </div>
                     <div className="sm:col-span-3">
                       <input
-                        type="number"
-                        min="1"
+                        type="text"
+                        inputMode="numeric"
                         placeholder="အရေအတွက်"
                         value={item.quantity === 0 ? '' : item.quantity}
                         onFocus={(e) => e.target.select()}
                         onChange={(e) => {
-                          const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
+                          const val = parseBilingualNumber(e.target.value);
                           const updated = [...items];
-                          updated[idx].quantity = cleanStr === '' ? 0 : parseInt(cleanStr, 10) || 0;
+                          updated[idx].quantity = isNaN(val) ? 0 : Math.max(0, val);
                           setItems(updated);
                         }}
                         className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold"
@@ -423,15 +469,15 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
                     </div>
                     <div className="sm:col-span-3">
                       <input
-                        type="number"
-                        min="0"
+                        type="text"
+                        inputMode="numeric"
                         placeholder="ရောင်းစျေး"
                         value={item.unitPrice === 0 ? '' : item.unitPrice}
                         onFocus={(e) => e.target.select()}
                         onChange={(e) => {
-                          const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
+                          const val = parseBilingualNumber(e.target.value);
                           const updated = [...items];
-                          updated[idx].unitPrice = cleanStr === '' ? 0 : parseInt(cleanStr, 10) || 0;
+                          updated[idx].unitPrice = isNaN(val) ? 0 : Math.max(0, val);
                           setItems(updated);
                         }}
                         className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-blue-900"
@@ -468,15 +514,13 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
                   လက်ငင်း/လွှဲပေးငွေ (ကျပ်)
                 </label>
                 <input
-                  type="number"
-                  min="0"
-                  max={grandTotal}
+                  type="text"
+                  inputMode="numeric"
                   value={cashPaidByMerchant === 0 ? '' : cashPaidByMerchant}
                   onFocus={(e) => e.target.select()}
                   onChange={(e) => {
-                    const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
-                    const val = cleanStr === '' ? 0 : parseInt(cleanStr, 10);
-                    setCashPaidByMerchant(isNaN(val) ? 0 : Math.max(0, val));
+                    const val = parseBilingualNumber(e.target.value);
+                    setCashPaidByMerchant(isNaN(val) ? 0 : Math.min(grandTotal, Math.max(0, val)));
                   }}
                   className="w-full px-3 py-1.5 bg-white border border-blue-300 rounded-lg text-xs font-bold text-emerald-800"
                 />
@@ -573,9 +617,12 @@ export const NewSaleModal: React.FC<NewSaleModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-sm cursor-pointer"
+              disabled={isSubmitting}
+              className={`px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-sm cursor-pointer ${
+                isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              အရောင်းဘောင်ချာထုတ်မည်
+              {isSubmitting ? 'ဘောင်ချာထုတ်နေပါသည်...' : 'အရောင်းဘောင်ချာထုတ်မည်'}
             </button>
           </div>
         </form>

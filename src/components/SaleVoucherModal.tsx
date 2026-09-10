@@ -38,15 +38,27 @@ export const SaleVoucherModal: React.FC<SaleVoucherModalProps> = ({
 
     const style = document.createElement('style');
     style.id = 'dynamic-sale-print-style';
-    let sizeRule = 'size: A5 portrait; margin: 4mm;';
-    if (paperSize === 'A4') sizeRule = 'size: A4 portrait; margin: 6mm;';
-    else if (paperSize === '80mm') sizeRule = 'size: 80mm auto; margin: 2mm;';
-    else if (paperSize === '58mm') sizeRule = 'size: 58mm auto; margin: 1mm;';
+    let sizeRule = 'size: A5 portrait;';
+    if (paperSize === 'A4') sizeRule = 'size: A4 portrait;';
+    else if (paperSize === '80mm') sizeRule = 'size: 80mm auto;';
+    else if (paperSize === '58mm') sizeRule = 'size: 58mm auto;';
 
     style.innerHTML = `
       @media print {
         @page {
           ${sizeRule}
+          margin: 0 !important;
+        }
+        body, html {
+          height: auto !important;
+          max-height: 100vh !important;
+          overflow: hidden !important;
+        }
+        .voucher-printable-scope {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          page-break-after: avoid !important;
+          break-after: avoid !important;
         }
       }
     `;

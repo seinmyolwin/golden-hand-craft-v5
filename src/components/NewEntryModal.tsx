@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Supplier, Product, TransactionRecord, TransactionItem } from '../types';
-import { formatMMK, formatNumberOnly, getTodayDateString, getCurrentTimeString } from '../utils/storage';
+import {
+  formatMMK,
+  formatNumberOnly,
+  getTodayDateString,
+  getCurrentTimeString,
+  findPotentialDuplicateTransaction,
+  getStoredTransactions,
+  parseBilingualNumber,
+} from '../utils/storage';
 import {
   X,
   Plus,
@@ -13,6 +21,7 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   Sparkles,
+  AlertTriangle,
 } from 'lucide-react';
 import { PhotoAttachmentField } from './PhotoAttachmentField';
 
@@ -47,6 +56,7 @@ export const NewEntryModal: React.FC<NewEntryModalProps> = ({
   const [newAdvanceReason, setNewAdvanceReason] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [attachmentPhotos, setAttachmentPhotos] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
     if (initialSupplierId) {
@@ -97,7 +107,7 @@ export const NewEntryModal: React.FC<NewEntryModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentSupplier) return;
+    if (!currentSupplier || isSubmitting) return;
 
     const validItems: TransactionItem[] = items
       .map((it) => {
@@ -114,6 +124,39 @@ export const NewEntryModal: React.FC<NewEntryModalProps> = ({
       })
       .filter((it): it is TransactionItem => it !== null);
 
+    if (validItems.length === 0) {
+      alert('အနည်းဆုံး ကုန်ပစ္စည်း ၁ မျိုး ထည့်သွင်းပေးပါ');
+      return;
+    }
+
+    // Duplicate Entry Protection
+    const existingTxs = getStoredTransactions();
+    const duplicate = findPotentialDuplicateTransaction(
+      {
+        supplierId: currentSupplier.id,
+        date: entryDate,
+        totalGoodsValue,
+        items: validItems,
+        netCashPaidToSupplier,
+      },
+      existingTxs
+    );
+
+    if (duplicate) {
+      const confirmed = window.confirm(
+        `သတိပေးချက် - အလားတူ ကုန်သိမ်းစာရင်းကို ယခင်က ထည့်သွင်းထားပြီးဖြစ်ပါသည်!\n\n` +
+        `• ယခင်ဘောင်ချာ: ${duplicate.voucherNo}\n` +
+        `• ရက်စွဲ: ${duplicate.date}\n` +
+        `• ပေးသွင်းသူ: ${duplicate.supplierName}\n` +
+        `• ကုန်တန်ဖိုး: ${formatMMK(duplicate.totalGoodsValue)}\n\n` +
+        `စာရင်းထပ်မံမဝင်စေရန် စစ်ဆေးပါ။ ဆက်လက်ထည့်သွင်းမည် သေချာပါသလား?`
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
     const voucherNo = `IN-${Date.now().toString().slice(-6)}`;
 
     const newRecord: TransactionRecord = {
@@ -136,8 +179,12 @@ export const NewEntryModal: React.FC<NewEntryModalProps> = ({
       attachmentPhotos,
     };
 
-    onSave(newRecord);
-    onClose();
+    try {
+      onSave(newRecord);
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -244,15 +291,15 @@ export const NewEntryModal: React.FC<NewEntryModalProps> = ({
                   </div>
                   <div className="sm:col-span-3">
                     <input
-                      type="number"
-                      min="1"
+                      type="text"
+                      inputMode="numeric"
                       placeholder="အရေအတွက်"
                       value={item.quantity === 0 ? '' : item.quantity}
                       onFocus={(e) => e.target.select()}
                       onChange={(e) => {
-                        const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
+                        const val = parseBilingualNumber(e.target.value);
                         const updated = [...items];
-                        updated[idx].quantity = cleanStr === '' ? 0 : parseInt(cleanStr, 10) || 0;
+                        updated[idx].quantity = isNaN(val) ? 0 : Math.max(0, val);
                         setItems(updated);
                       }}
                       className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold"
@@ -284,14 +331,13 @@ export const NewEntryModal: React.FC<NewEntryModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <input
-                  type="number"
-                  min="0"
+                  type="text"
+                  inputMode="numeric"
                   placeholder="ငွေပမာဏ - 0"
                   value={newAdvanceTaken === 0 ? '' : newAdvanceTaken}
                   onFocus={(e) => e.target.select()}
                   onChange={(e) => {
-                    const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
-                    const val = cleanStr === '' ? 0 : parseInt(cleanStr, 10);
+                    const val = parseBilingualNumber(e.target.value);
                     setNewAdvanceTaken(isNaN(val) ? 0 : Math.max(0, val));
                   }}
                   className="w-full px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-bold text-amber-900"
@@ -363,9 +409,12 @@ export const NewEntryModal: React.FC<NewEntryModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow-sm cursor-pointer"
+              disabled={isSubmitting}
+              className={`px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow-sm cursor-pointer ${
+                isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              ဘောင်ချာဖွင့်၍ စာရင်းသွင်းမည်
+              {isSubmitting ? 'ဘောင်ချာဖွင့်နေပါသည်...' : 'ဘောင်ချာဖွင့်၍ စာရင်းသွင်းမည်'}
             </button>
           </div>
         </form>

@@ -17,6 +17,7 @@ import {
   BackupReminderSettings,
   AutoRecoverySnapshot,
   OrderStatus,
+  MerchantPurchaseRecord,
 } from './types';
 import {
   loadSuppliers,
@@ -48,6 +49,9 @@ import {
   getStoredRecoverySnapshots,
   createAutoRecoverySnapshot,
   computeAllProductsStock,
+  getStoredMerchantPurchases,
+  saveStoredMerchantPurchases,
+  mergeDatabaseSnapshots,
   getTodayDateString,
   getCurrentTimeString,
 } from './utils/storage';
@@ -58,6 +62,7 @@ import { BottomNav } from './components/BottomNav';
 import { DailyPickupTab } from './components/DailyPickupTab';
 import { MerchantSalesTab } from './components/MerchantSalesTab';
 import { MerchantOrdersTab } from './components/MerchantOrdersTab';
+import { MerchantPurchasesTab } from './components/MerchantPurchasesTab';
 import { PeerTradingTab } from './components/PeerTradingTab';
 import { InventoryTab } from './components/InventoryTab';
 import { SuppliersTab } from './components/SuppliersTab';
@@ -193,6 +198,9 @@ export default function App() {
       return getFullDemoData().stockAdjustments;
     }
     return loaded;
+  });
+  const [merchantPurchases, setMerchantPurchases] = useState<MerchantPurchaseRecord[]>(() => {
+    return getStoredMerchantPurchases();
   });
   const [backupReminderSettings, setBackupReminderSettings] = useState<BackupReminderSettings>(() => getStoredBackupReminderSettings());
   const [snapshots, setSnapshots] = useState<AutoRecoverySnapshot[]>(() => getStoredRecoverySnapshots());
@@ -823,6 +831,7 @@ export default function App() {
     setStockAdjustments([]);
     setAuditLogs([]);
     setDeletedItems([]);
+    setMerchantPurchases([]);
     setProducts(zeroedProducts);
     setSuppliers(zeroedSuppliers);
     setMerchants(zeroedMerchants);
@@ -833,6 +842,7 @@ export default function App() {
     saveOrders([]);
     savePeerTrades([]);
     saveStoredStockAdjustments([]);
+    saveStoredMerchantPurchases([]);
     saveAuditLogs([]);
     saveDeletedItems([]);
     saveProducts(zeroedProducts);
@@ -858,6 +868,7 @@ export default function App() {
     setPeerTrades([]);
     setStockAdjustments([]);
     setDeletedItems([]);
+    setMerchantPurchases([]);
 
     saveProducts(zeroData.products);
     saveSuppliers(zeroData.suppliers);
@@ -867,6 +878,7 @@ export default function App() {
     saveOrders([]);
     savePeerTrades([]);
     saveStoredStockAdjustments([]);
+    saveStoredMerchantPurchases([]);
     saveDeletedItems([]);
     saveShopSettings(shopSettings);
 
@@ -874,6 +886,37 @@ export default function App() {
     logAction('အက်ပ်ကို လက်တွေ့ စတင်အသုံးပြုခြင်း (Zero Settings)', 'All balances and transactions zeroed', 'SYSTEM');
     alert('ဆိုင်စာရင်း အသစ်စတင်ခြင်း အောင်မြင်ပါသည်။ စာရင်းအားလုံးကို သုည (၀) သတ်မှတ်ပြီးဖြစ်၍ လက်တွေ့စတင်သုံးနိုင်ပါပြီ။');
   }, [products, suppliers, merchants, shopSettings, logAction]);
+
+  // Merchant Raw Material Purchases Handlers
+  const handleSaveMerchantPurchase = useCallback((record: MerchantPurchaseRecord) => {
+    setMerchantPurchases((prev) => {
+      const updated = [record, ...prev];
+      saveStoredMerchantPurchases(updated);
+      return updated;
+    });
+    logAction('ကုန်ကြမ်းဝယ်ယူမှု စာရင်းသွင်းခြင်း', `ဘောင်ချာ ${record.purchaseNo} - ${record.merchantName}`, 'PURCHASE');
+  }, [logAction]);
+
+  const handleDeleteMerchantPurchase = useCallback((id: string) => {
+    const target = merchantPurchases.find((p) => p.id === id);
+    if (target) {
+      const softDeleted: SoftDeletedItem = {
+        id: `del-${Date.now()}`,
+        originalId: target.id,
+        name: `ကုန်ကြမ်းဝယ်ယူမှု ${target.purchaseNo} (${target.merchantName})`,
+        type: 'TRANSACTION',
+        deletedAt: `${getTodayDateString()} ${getCurrentTimeString()}`,
+        data: target,
+      };
+      setDeletedItems((prev) => [softDeleted, ...prev]);
+      setMerchantPurchases((prev) => {
+        const updated = prev.filter((p) => p.id !== id);
+        saveStoredMerchantPurchases(updated);
+        return updated;
+      });
+      logAction('ကုန်ကြမ်းဝယ်ယူမှု ဖျက်သိမ်းခြင်း', `ဘောင်ချာ ${target.purchaseNo}`, 'PURCHASE');
+    }
+  }, [merchantPurchases, logAction]);
 
   // Full Demo Data Loader
   const handleLoadDemoData = useCallback(() => {
@@ -904,13 +947,49 @@ export default function App() {
     }
   }, [logAction]);
 
-  // Import Backup
-  const handleImportBackupData = useCallback((backup: any) => {
+  // Import Backup & Local Sync with Smart Merge support
+  const handleImportBackupData = useCallback((backup: any, mode: 'MERGE' | 'OVERWRITE' = 'MERGE') => {
+    if (!backup || typeof backup !== 'object') {
+      alert('ထည့်သွင်းထားသော ဖိုင် သို့မဟုတ် ကုဒ် ပုံစံမမှန်ကန်ပါ');
+      return;
+    }
+
+    if (mode === 'MERGE') {
+      const localData = {
+        suppliers,
+        merchants,
+        products,
+        transactions,
+        sales,
+        merchantPurchases,
+        orders,
+        peerTrades,
+        shopSettings,
+      };
+      const result = mergeDatabaseSnapshots(localData, backup);
+      if (result.success && result.mergedData) {
+        setSuppliers(result.mergedData.suppliers);
+        setMerchants(result.mergedData.merchants);
+        setProducts(result.mergedData.products);
+        setTransactions(result.mergedData.transactions);
+        setSales(result.mergedData.sales);
+        if (result.mergedData.merchantPurchases) {
+          setMerchantPurchases(result.mergedData.merchantPurchases);
+        }
+        setOrders(result.mergedData.orders);
+        logAction('စာရင်းများ ပေါင်းစည်းခြင်း (Smart Merge)', result.message, 'SYSTEM');
+        alert(result.message);
+        return;
+      }
+    }
+
+    // OVERWRITE fallback or explicit overwrite
     if (backup.suppliers) setSuppliers(backup.suppliers);
     if (backup.merchants) setMerchants(backup.merchants);
     if (backup.products) setProducts(backup.products);
     if (backup.transactions) setTransactions(backup.transactions);
     if (backup.sales) setSales(backup.sales);
+    if (backup.merchantPurchases) setMerchantPurchases(backup.merchantPurchases);
     if (backup.orders) setOrders(backup.orders);
     if (backup.peerTrades) setPeerTrades(backup.peerTrades);
     if (backup.shopSettings) setShopSettings(backup.shopSettings);
@@ -918,7 +997,7 @@ export default function App() {
 
     logAction('မိတ္တူဖိုင်မှ စာရင်းပြန်သွင်းခြင်း', 'Backup imported successfully', 'SYSTEM');
     alert('အချက်အလက်များ အောင်မြင်စွာ ပြန်လည်သွင်းယူပြီးပါပြီ');
-  }, [logAction]);
+  }, [suppliers, merchants, products, transactions, sales, merchantPurchases, orders, peerTrades, shopSettings, logAction]);
 
   // Excel Bulk Import Handlers
   const handleOpenExcelImport = useCallback((target: ExcelImportTarget = 'PRODUCTS') => {
@@ -1230,6 +1309,7 @@ export default function App() {
           onOpenBackup={() => setActiveTab('backup')}
           onOpenAuditLogs={() => setIsDeletedHistoryModalOpen(true)}
           onOpenClearData={() => setIsClearDataModalOpen(true)}
+          onOpenZeroSettings={() => setIsZeroResetModalOpen(true)}
           onOpenLocalSync={() => setIsLocalSyncModalOpen(true)}
           onOpenZapya={() => setIsZapyaModalOpen(true)}
           appLockEnabled={appLockSettings.enabled ?? false}
@@ -1299,6 +1379,17 @@ export default function App() {
               onOpenNewSale={() => handleOpenNewSale()}
               onViewSaleVoucher={handleViewSaleVoucher}
               onDeleteSale={handleDeleteSale}
+            />
+          )}
+
+          {normalizedTab === 'purchases' && (
+            <MerchantPurchasesTab
+              purchases={merchantPurchases}
+              merchants={merchants}
+              products={products}
+              selectedDate={selectedDate}
+              onSavePurchase={handleSaveMerchantPurchase}
+              onDeletePurchase={handleDeleteMerchantPurchase}
             />
           )}
 
@@ -1372,6 +1463,7 @@ export default function App() {
               transactions={transactions}
               sales={sales}
               merchants={merchants}
+              merchantPurchases={merchantPurchases}
             />
           )}
 

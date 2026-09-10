@@ -1,6 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Product } from '../types';
-import { formatMMK, formatNumberOnly } from '../utils/storage';
+import {
+  formatMMK,
+  formatNumberOnly,
+  parseBilingualNumber,
+  getStoredProductCategories,
+} from '../utils/storage';
 import {
   Package,
   Search,
@@ -12,7 +17,9 @@ import {
   DollarSign,
   Layers,
   FileSpreadsheet,
+  SlidersHorizontal,
 } from 'lucide-react';
+import { CategoryManageModal } from './CategoryManageModal';
 
 interface ProductsTabProps {
   products: Product[];
@@ -33,6 +40,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [displayLimit, setDisplayLimit] = useState<number>(36);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState<boolean>(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const [name, setName] = useState<string>('');
@@ -44,12 +52,12 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
   const [minStockAlert, setMinStockAlert] = useState<number>(15);
 
   const categories = useMemo(() => {
-    const set = new Set<string>();
+    const set = new Set<string>(getStoredProductCategories());
     (products || []).forEach((p) => {
       if (p && p.category) set.add(p.category);
     });
     return Array.from(set);
-  }, [products]);
+  }, [products, isCategoryModalOpen]);
 
   const filteredProducts = useMemo(() => {
     return (products || []).filter((p) => {
@@ -208,6 +216,15 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                 {cat}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setIsCategoryModalOpen(true)}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 flex items-center gap-1 cursor-pointer transition-colors shrink-0"
+              title="အမျိုးအစား စီမံပြင်ဆင်ရန်"
+            >
+              <Tag className="w-3.5 h-3.5 text-emerald-600" />
+              <span>အမျိုးအစား ပြင်ဆင်ရန်</span>
+            </button>
           </div>
         </div>
       </div>
@@ -344,12 +361,18 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                   <label className="block text-slate-700 font-semibold mb-1">အမျိုးအစား *</label>
                   <input
                     type="text"
+                    list="product-category-list"
                     placeholder="ဥပမာ - ယွန်းထည်"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     required
                   />
+                  <datalist id="product-category-list">
+                    {categories.map((c) => (
+                      <option key={c} value={c} />
+                    ))}
+                  </datalist>
                 </div>
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">ရေတွက်ယူနစ် *</label>
@@ -369,14 +392,12 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                     ဝယ်စျေး (ကျပ်) *
                   </label>
                   <input
-                    type="number"
-                    min="0"
-                    step="any"
+                    type="text"
+                    inputMode="numeric"
                     value={defaultPrice === 0 ? '' : defaultPrice}
                     onFocus={(e) => e.target.select()}
                     onChange={(e) => {
-                      const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
-                      const val = cleanStr === '' ? 0 : parseInt(cleanStr, 10);
+                      const val = parseBilingualNumber(e.target.value);
                       const price = isNaN(val) ? 0 : Math.max(0, val);
                       setDefaultPrice(price);
                       if (!editingProduct) {
@@ -392,14 +413,12 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                     လက္ကားရောင်းစျေး (ကျပ်) *
                   </label>
                   <input
-                    type="number"
-                    min="0"
-                    step="any"
+                    type="text"
+                    inputMode="numeric"
                     value={defaultWholesalePrice === 0 ? '' : defaultWholesalePrice}
                     onFocus={(e) => e.target.select()}
                     onChange={(e) => {
-                      const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
-                      const val = cleanStr === '' ? 0 : parseInt(cleanStr, 10);
+                      const val = parseBilingualNumber(e.target.value);
                       setDefaultWholesalePrice(isNaN(val) ? 0 : Math.max(0, val));
                     }}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-bold text-blue-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -413,13 +432,12 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                     အဖွင့်လက်ကျန် (Opening Stock)
                   </label>
                   <input
-                    type="number"
-                    min="0"
+                    type="text"
+                    inputMode="numeric"
                     value={openingStock === 0 ? '' : openingStock}
                     onFocus={(e) => e.target.select()}
                     onChange={(e) => {
-                      const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
-                      const val = cleanStr === '' ? 0 : parseInt(cleanStr, 10);
+                      const val = parseBilingualNumber(e.target.value);
                       setOpeningStock(isNaN(val) ? 0 : Math.max(0, val));
                     }}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg"
@@ -430,13 +448,12 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                     အနည်းဆုံးသတိပေးလက်ကျန်
                   </label>
                   <input
-                    type="number"
-                    min="1"
+                    type="text"
+                    inputMode="numeric"
                     value={minStockAlert === 0 ? '' : minStockAlert}
                     onFocus={(e) => e.target.select()}
                     onChange={(e) => {
-                      const cleanStr = e.target.value.replace(/^0+(?=\d)/, '');
-                      const val = cleanStr === '' ? 0 : parseInt(cleanStr, 10);
+                      const val = parseBilingualNumber(e.target.value);
                       setMinStockAlert(isNaN(val) ? 0 : Math.max(0, val));
                     }}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg"
@@ -462,6 +479,13 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
           </div>
         </div>
       )}
+      {/* Category Management Modal */}
+      <CategoryManageModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        products={products}
+        onUpdateProduct={onUpdateProduct}
+      />
     </div>
   );
 };

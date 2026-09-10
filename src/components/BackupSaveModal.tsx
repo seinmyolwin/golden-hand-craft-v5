@@ -5,7 +5,7 @@ import { X, Download, Upload, Shield, CheckCircle2, FileText, Database } from 'l
 interface BackupSaveModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImportBackup: (importedData: any) => void;
+  onImportBackup: (importedData: any, mode?: 'MERGE' | 'OVERWRITE') => void;
 }
 
 export const BackupSaveModal: React.FC<BackupSaveModalProps> = ({
@@ -14,6 +14,7 @@ export const BackupSaveModal: React.FC<BackupSaveModalProps> = ({
   onImportBackup,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingData, setPendingData] = React.useState<any | null>(null);
 
   if (!isOpen) return null;
 
@@ -25,15 +26,30 @@ export const BackupSaveModal: React.FC<BackupSaveModalProps> = ({
     reader.onload = (event) => {
       try {
         const json = JSON.parse(event.target?.result as string);
-        if (confirm('မိတ္တူဖိုင်မှ အချက်အလက်များကို ပြန်လည်သွင်းယူလိုပါသလား? လက်ရှိအချက်အလက်များ အစားထိုးသွားပါမည်။')) {
-          onImportBackup(json);
-          onClose();
-        }
+        setPendingData(json);
       } catch (err) {
         alert('ဖိုင်ဖတ်ရှု၍ မရပါ၊ မှန်ကန်သော JSON backup ဖိုင်ဖြစ်ပါစေ');
       }
     };
     reader.readAsText(file);
+    // Reset file input so user can re-select same file if needed
+    e.target.value = '';
+  };
+
+  const handleConfirmMerge = () => {
+    if (!pendingData) return;
+    onImportBackup(pendingData, 'MERGE');
+    setPendingData(null);
+    onClose();
+  };
+
+  const handleConfirmOverwrite = () => {
+    if (!pendingData) return;
+    if (confirm('သတိပေးချက် - လက်ရှိစာရင်းများအားလုံးကို အစားထိုးမည်မှာ သေချာပါသလား?')) {
+      onImportBackup(pendingData, 'OVERWRITE');
+      setPendingData(null);
+      onClose();
+    }
   };
 
   return (
@@ -96,23 +112,75 @@ export const BackupSaveModal: React.FC<BackupSaveModalProps> = ({
             </button>
           </div>
 
-          <div className="pt-2 border-t border-slate-200">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileUpload}
-              accept=".json"
-              className="hidden"
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
-            >
-              <Upload className="w-4 h-4" />
-              <span>မိတ္တူဖိုင်မှ စာရင်းပြန်သွင်းမည် (Restore Backup)</span>
-            </button>
-          </div>
+          {pendingData ? (
+            <div className="p-3.5 bg-emerald-50/80 border border-emerald-300 rounded-xl space-y-3 animate-in fade-in">
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-emerald-950 text-xs sm:text-sm">
+                    မိတ္တူဖိုင် ဖတ်ရှုပြီးပါပြီ
+                  </h4>
+                  <p className="text-[11px] text-emerald-800 mt-0.5">
+                    မည်သည့်ပုံစံဖြင့် စာရင်းပြန်သွင်းလိုပါသလဲ ရွေးချယ်ပေးပါ-
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleConfirmMerge}
+                  className="w-full p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex flex-col items-start gap-0.5 cursor-pointer transition-colors shadow-2xs text-left"
+                >
+                  <span className="flex items-center gap-1.5 font-black">
+                    🔄 စာရင်းများ ပေါင်းစည်းမည် (Smart Merge - အကြံပြုထားသည်)
+                  </span>
+                  <span className="text-[10px] text-emerald-100 font-normal">
+                    လက်ရှိစာရင်းများ မပျောက်ဘဲ မိတ္တူဖိုင်မှ အသစ်များကိုသာ စစ်ဆေးပေါင်းစပ်ထည့်သွင်းပါမည်
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleConfirmOverwrite}
+                  className="w-full p-2.5 bg-white hover:bg-rose-50 border border-rose-300 text-rose-800 rounded-lg font-bold text-xs flex flex-col items-start gap-0.5 cursor-pointer transition-colors text-left"
+                >
+                  <span className="flex items-center gap-1.5 font-bold">
+                    ⚠️ လက်ရှိစာရင်းအားလုံး အစားထိုးမည် (Full Overwrite)
+                  </span>
+                  <span className="text-[10px] text-rose-600 font-normal">
+                    လက်ရှိစာရင်းများကို ဖျက်ပြီး မိတ္တူဖိုင်ပါအတိုင်း အစအဆုံး ပြန်လည်ထားရှိပါမည်
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPendingData(null)}
+                  className="w-full py-1.5 text-center text-slate-500 hover:text-slate-700 text-xs font-semibold cursor-pointer"
+                >
+                  မလုပ်တော့ပါ (Cancel)
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="pt-2 border-t border-slate-200">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                accept=".json"
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                <span>မိတ္တူဖိုင်မှ စာရင်းပြန်သွင်းမည် (Restore Backup)</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -11,6 +11,7 @@ import {
   Database,
   ShoppingBag,
   ArrowRightLeft,
+  Boxes,
 } from 'lucide-react';
 
 interface BottomNavProps {
@@ -62,6 +63,12 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       icon: Truck,
       badge: todaySalesCount > 0 ? todaySalesCount : undefined,
       badgeColor: 'bg-blue-600',
+    },
+    {
+      id: 'purchases' as ActiveTab,
+      label: 'ကုန်ကြမ်းဝယ်',
+      sublabel: 'Purchases',
+      icon: Boxes,
     },
     {
       id: 'peers' as ActiveTab,

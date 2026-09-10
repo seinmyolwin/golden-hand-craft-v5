@@ -219,12 +219,14 @@ export interface MerchantPurchaseRecord {
   merchantId: string;
   merchantName: string;
   merchantTown: string;
+  sellerPhone?: string;
   date: string; // YYYY-MM-DD
   time: string; // HH:mm
   items: CollectionItem[];
   totalAmount: number;
   paidAmount: number;
   remainingPayableBalance: number;
+  paymentMethod?: string;
   notes?: string;
   createdAt: string;
 }
@@ -376,12 +378,13 @@ export interface SyncPacket {
   };
 }
 
-export type ActiveTab = 'daily' | 'inventory' | 'sales' | 'orders' | 'peers' | 'merchants' | 'suppliers' | 'history' | 'reports' | 'backup' | 'products';
+export type ActiveTab = 'daily' | 'inventory' | 'sales' | 'purchases' | 'orders' | 'peers' | 'merchants' | 'suppliers' | 'history' | 'reports' | 'backup' | 'products';
 
 export type TabType =
   | 'daily'
   | 'inventory'
   | 'sales'
+  | 'purchases'
   | 'orders'
   | 'peers'
   | 'merchants'
@@ -392,6 +395,7 @@ export type TabType =
   | 'products'
   | 'PICKUP'
   | 'MERCHANT_SALES'
+  | 'PURCHASES'
   | 'ORDERS'
   | 'PEER_TRADING'
   | 'INVENTORY'

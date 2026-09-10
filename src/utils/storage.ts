@@ -49,7 +49,134 @@ const STORAGE_KEYS = {
   PEER_TRANSACTIONS: 'ledger_peer_transactions_v1',
   DEVICE_INFO: 'ledger_device_info_v1',
   RAW_MATERIAL_PRESETS: 'ledger_raw_material_presets_v1',
+  PRODUCT_CATEGORIES: 'ledger_product_categories_v2',
+  RAW_MATERIAL_CATEGORIES: 'ledger_raw_material_categories_v2',
 };
+
+export const DEFAULT_PRODUCT_CATEGORIES: string[] = [
+  'ယွန်းထည်',
+  'ဝါးထည်',
+  'ကြိမ်ထည်',
+  'ပန်းပု',
+  'အခြားလက်မှု',
+];
+
+export const DEFAULT_RAW_MATERIAL_CATEGORIES: string[] = [
+  'ဝါးကုန်ကြမ်း',
+  'ကြိမ်ကုန်ကြမ်း',
+  'ငွေကြိုယူ',
+  'ဆေးသုတ်ပစ္စည်း/ကော်',
+  'အခြားကုန်ကြမ်း',
+];
+
+/**
+ * Parses numbers input in either English (0-9) or Myanmar digits (၀-၉, including ဝ U+1015).
+ * Removes thousand separators (commas), currency labels and whitespace.
+ * Returns 0 if invalid or empty.
+ */
+export function parseBilingualNumber(val: string | number | null | undefined): number {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'number') return isNaN(val) ? 0 : val;
+  const str = String(val).trim();
+  if (!str) return 0;
+
+  const myanmarToEnglishMap: { [key: string]: string } = {
+    '၀': '0', // U+1040 Myanmar digit zero
+    'ဝ': '0', // U+1015 Myanmar letter Wa
+    '၁': '1',
+    '၂': '2',
+    '၃': '3',
+    '၄': '4',
+    '၅': '5',
+    '၆': '6',
+    '၇': '7',
+    '၈': '8',
+    '၉': '9',
+  };
+
+  let normalized = '';
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i];
+    if (myanmarToEnglishMap[ch] !== undefined) {
+      normalized += myanmarToEnglishMap[ch];
+    } else if ((ch >= '0' && ch <= '9') || ch === '.' || ch === '-') {
+      normalized += ch;
+    }
+  }
+
+  const parsed = parseFloat(normalized);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+/**
+ * Normalizes input text by converting any Myanmar digits into standard English numeric characters.
+ */
+export function normalizeBilingualDigits(input: string): string {
+  if (!input) return '';
+  const myanmarToEnglishMap: { [key: string]: string } = {
+    '၀': '0', 'ဝ': '0',
+    '၁': '1', '၂': '2', '၃': '3', '၄': '4',
+    '၅': '5', '၆': '6', '၇': '7', '၈': '8', '၉': '9',
+  };
+  let res = '';
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i];
+    if (myanmarToEnglishMap[ch] !== undefined) {
+      res += myanmarToEnglishMap[ch];
+    } else if ((ch >= '0' && ch <= '9') || ch === '.' || ch === '-') {
+      res += ch;
+    }
+  }
+  return res;
+}
+
+export function getStoredProductCategories(): string[] {
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.PRODUCT_CATEGORIES);
+    if (!data) {
+      localStorage.setItem(STORAGE_KEYS.PRODUCT_CATEGORIES, JSON.stringify(DEFAULT_PRODUCT_CATEGORIES));
+      return DEFAULT_PRODUCT_CATEGORIES;
+    }
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_PRODUCT_CATEGORIES;
+  } catch (e) {
+    console.error('Error reading product categories', e);
+    return DEFAULT_PRODUCT_CATEGORIES;
+  }
+}
+
+export function saveStoredProductCategories(categories: string[]): void {
+  try {
+    const clean = Array.from(new Set(categories.map((c) => c.trim()).filter(Boolean)));
+    localStorage.setItem(STORAGE_KEYS.PRODUCT_CATEGORIES, JSON.stringify(clean.length > 0 ? clean : DEFAULT_PRODUCT_CATEGORIES));
+  } catch (e) {
+    console.error('Error saving product categories', e);
+  }
+}
+
+export function getStoredRawMaterialCategories(): string[] {
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.RAW_MATERIAL_CATEGORIES);
+    if (!data) {
+      localStorage.setItem(STORAGE_KEYS.RAW_MATERIAL_CATEGORIES, JSON.stringify(DEFAULT_RAW_MATERIAL_CATEGORIES));
+      return DEFAULT_RAW_MATERIAL_CATEGORIES;
+    }
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_RAW_MATERIAL_CATEGORIES;
+  } catch (e) {
+    console.error('Error reading raw material categories', e);
+    return DEFAULT_RAW_MATERIAL_CATEGORIES;
+  }
+}
+
+export function saveStoredRawMaterialCategories(categories: string[]): void {
+  try {
+    const clean = Array.from(new Set(categories.map((c) => c.trim()).filter(Boolean)));
+    localStorage.setItem(STORAGE_KEYS.RAW_MATERIAL_CATEGORIES, JSON.stringify(clean.length > 0 ? clean : DEFAULT_RAW_MATERIAL_CATEGORIES));
+  } catch (e) {
+    console.error('Error saving raw material categories', e);
+  }
+}
 
 // Generate an 8-character random formatted recovery key e.g. "SLY-8842-9173"
 export function generateRandomRecoveryKey(): string {
@@ -857,20 +984,25 @@ export function computeAllProductsStock(
     if (tx.type === 'RAW_MATERIAL_CREDIT') {
       const rawItems = (tx.materialItems && tx.materialItems.length > 0) ? tx.materialItems : (tx.items || []);
       rawItems.forEach((item) => {
-        if (item && item.productId) {
-          outflowMap[item.productId] = (outflowMap[item.productId] || 0) + (item.quantity || 0);
+        if (item) {
+          if (item.productId) outflowMap[item.productId] = (outflowMap[item.productId] || 0) + (item.quantity || 0);
+          if (item.productName) outflowMap[item.productName] = (outflowMap[item.productName] || 0) + (item.quantity || 0);
         }
       });
-    } else if (tx.type === 'COLLECTION_AND_SETTLEMENT') {
+    } else {
+      // Inbound collection of finished goods from suppliers/villages:
+      // Accepts COLLECTION_AND_SETTLEMENT, undefined type, or any inbound collection
       (tx.items || []).forEach((item) => {
-        if (item && item.productId) {
-          inflowMap[item.productId] = (inflowMap[item.productId] || 0) + (item.quantity || 0);
+        if (item) {
+          if (item.productId) inflowMap[item.productId] = (inflowMap[item.productId] || 0) + (item.quantity || 0);
+          if (item.productName) inflowMap[item.productName] = (inflowMap[item.productName] || 0) + (item.quantity || 0);
         }
       });
       if (tx.materialItems && Array.isArray(tx.materialItems)) {
         tx.materialItems.forEach((mItem) => {
-          if (mItem && mItem.productId) {
-            outflowMap[mItem.productId] = (outflowMap[mItem.productId] || 0) + (mItem.quantity || 0);
+          if (mItem) {
+            if (mItem.productId) outflowMap[mItem.productId] = (outflowMap[mItem.productId] || 0) + (mItem.quantity || 0);
+            if (mItem.productName) outflowMap[mItem.productName] = (outflowMap[mItem.productName] || 0) + (mItem.quantity || 0);
           }
         });
       }
@@ -943,9 +1075,9 @@ export function computeAllProductsStock(
   });
 
   return safeProducts.map((p) => {
-    const opening = p.openingStock ?? 50;
-    const inflow = inflowMap[p.id] || 0;
-    const outflow = outflowMap[p.id] || 0;
+    const opening = p.openingStock ?? 0;
+    const inflow = (inflowMap[p.id] || 0) + (inflowMap[p.name] && !inflowMap[p.id] ? inflowMap[p.name] : 0);
+    const outflow = (outflowMap[p.id] || 0) + (outflowMap[p.name] && !outflowMap[p.id] ? outflowMap[p.name] : 0);
     const adj = adjustMap[p.id] || 0;
     const finalStock = opening + inflow - outflow + adj;
     const minAlert = p.minStockAlert ?? 15;
@@ -1610,6 +1742,244 @@ export function saveDeletedItems(items: any[]): void {
   safeLocalStorageSet('ledger_deleted_items_v1', items);
 }
 
+export function findPotentialDuplicateTransaction(
+  newTx: Partial<TransactionRecord>,
+  existingTransactions: TransactionRecord[]
+): TransactionRecord | null {
+  if (!newTx || !existingTransactions || existingTransactions.length === 0) return null;
+  const targetSupplierId = newTx.supplierId;
+  const targetDate = newTx.date;
+  const targetTotal = newTx.totalGoodsValue || 0;
+  const targetNetCash = newTx.netCashPaidToSupplier || 0;
+
+  return (
+    existingTransactions.find((tx) => {
+      if (tx.supplierId !== targetSupplierId) return false;
+      if (tx.date !== targetDate) return false;
+      if (Math.abs((tx.totalGoodsValue || 0) - targetTotal) > 0.01) return false;
+      if (Math.abs((tx.netCashPaidToSupplier || 0) - targetNetCash) > 0.01) return false;
+      const txItems = tx.items || [];
+      const newItems = newTx.items || [];
+      if (txItems.length !== newItems.length) return false;
+      return newItems.every((nIt) =>
+        txItems.some(
+          (tIt) =>
+            (tIt.productId === nIt.productId || tIt.productName === nIt.productName) &&
+            tIt.quantity === nIt.quantity
+        )
+      );
+    }) || null
+  );
+}
+
+export function findPotentialDuplicateSale(
+  newSale: Partial<SaleRecord>,
+  existingSales: SaleRecord[]
+): SaleRecord | null {
+  if (!newSale || !existingSales || existingSales.length === 0) return null;
+  const targetMerchantId = newSale.merchantId;
+  const targetDate = newSale.date;
+  const targetTotal = newSale.grandTotal || 0;
+  const targetCash = newSale.cashPaidByMerchant || 0;
+
+  return (
+    existingSales.find((s) => {
+      if (s.merchantId !== targetMerchantId) return false;
+      if (s.date !== targetDate) return false;
+      if (Math.abs((s.grandTotal || 0) - targetTotal) > 0.01) return false;
+      if (Math.abs((s.cashPaidByMerchant || 0) - targetCash) > 0.01) return false;
+      const sItems = s.items || [];
+      const newItems = newSale.items || [];
+      if (sItems.length !== newItems.length) return false;
+      return newItems.every((nIt) =>
+        sItems.some(
+          (sIt) =>
+            (sIt.productId === nIt.productId || sIt.productName === nIt.productName) &&
+            sIt.quantity === nIt.quantity
+        )
+      );
+    }) || null
+  );
+}
+
+export interface MergeSyncResult {
+  success: boolean;
+  message: string;
+  stats: {
+    addedTransactions: number;
+    addedSales: number;
+    addedPurchases: number;
+    addedOrders: number;
+    addedProducts: number;
+    addedSuppliers: number;
+    addedMerchants: number;
+    addedPeerTrades: number;
+  };
+  mergedData: any;
+}
+
+/**
+ * Intelligently merges snapshots from multiple devices (e.g. Phone A and Phone B over Hotspot/Wifi/Zapya).
+ * Combines transactions, sales, products, merchants without creating duplicate records or overwriting unsynced entries.
+ */
+export function mergeDatabaseSnapshots(
+  localData: any,
+  incomingData: any
+): MergeSyncResult {
+  const stats = {
+    addedTransactions: 0,
+    addedSales: 0,
+    addedPurchases: 0,
+    addedOrders: 0,
+    addedProducts: 0,
+    addedSuppliers: 0,
+    addedMerchants: 0,
+    addedPeerTrades: 0,
+  };
+
+  if (!incomingData || typeof incomingData !== 'object') {
+    return {
+      success: false,
+      message: 'မမှန်ကန်သော ဒေတာဖိုင် ဖြစ်နေပါသည် (Data format invalid)',
+      stats,
+      mergedData: localData,
+    };
+  }
+
+  // 1. Transactions Merge (De-duplicate by ID or voucherNo)
+  const localTx: TransactionRecord[] = Array.isArray(localData?.transactions) ? [...localData.transactions] : [];
+  const incTx: TransactionRecord[] = Array.isArray(incomingData?.transactions) ? incomingData.transactions : [];
+  incTx.forEach((it) => {
+    if (!it) return;
+    const exists = localTx.some((lt) => lt.id === it.id || (lt.voucherNo && lt.voucherNo === it.voucherNo));
+    if (!exists) {
+      localTx.push(it);
+      stats.addedTransactions++;
+    }
+  });
+  localTx.sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+
+  // 2. Sales Merge (De-duplicate by ID or voucherNo)
+  const localSales: SaleRecord[] = Array.isArray(localData?.sales) ? [...localData.sales] : [];
+  const incSales: SaleRecord[] = Array.isArray(incomingData?.sales) ? incomingData.sales : [];
+  incSales.forEach((is) => {
+    if (!is) return;
+    const exists = localSales.some((ls) => ls.id === is.id || (ls.voucherNo && ls.voucherNo === is.voucherNo));
+    if (!exists) {
+      localSales.push(is);
+      stats.addedSales++;
+    }
+  });
+  localSales.sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+
+  // 3. Merchant Purchases Merge
+  const localPurchases: MerchantPurchaseRecord[] = Array.isArray(localData?.merchantPurchases) ? [...localData.merchantPurchases] : [];
+  const incPurchases: MerchantPurchaseRecord[] = Array.isArray(incomingData?.merchantPurchases) ? incomingData.merchantPurchases : [];
+  incPurchases.forEach((ip) => {
+    if (!ip) return;
+    const exists = localPurchases.some((lp) => lp.id === ip.id || (lp.purchaseNo && lp.purchaseNo === ip.purchaseNo));
+    if (!exists) {
+      localPurchases.push(ip);
+      stats.addedPurchases++;
+    }
+  });
+
+  // 4. Products Merge (Combine products)
+  const localProducts: Product[] = Array.isArray(localData?.products) ? [...localData.products] : [];
+  const incProducts: Product[] = Array.isArray(incomingData?.products) ? incomingData.products : [];
+  incProducts.forEach((ip) => {
+    if (!ip || !ip.name) return;
+    const existsIndex = localProducts.findIndex((lp) => lp.id === ip.id || lp.name.trim().toLowerCase() === ip.name.trim().toLowerCase());
+    if (existsIndex === -1) {
+      localProducts.push(ip);
+      stats.addedProducts++;
+    }
+  });
+
+  // 5. Suppliers Merge (Combine suppliers)
+  const localSuppliers: Supplier[] = Array.isArray(localData?.suppliers) ? [...localData.suppliers] : [];
+  const incSuppliers: Supplier[] = Array.isArray(incomingData?.suppliers) ? incomingData.suppliers : [];
+  incSuppliers.forEach((is) => {
+    if (!is || !is.name) return;
+    const exists = localSuppliers.some((ls) => ls.id === is.id || ls.name.trim() === is.name.trim());
+    if (!exists) {
+      localSuppliers.push(is);
+      stats.addedSuppliers++;
+    }
+  });
+
+  // 6. Merchants Merge
+  const localMerchants: Merchant[] = Array.isArray(localData?.merchants) ? [...localData.merchants] : [];
+  const incMerchants: Merchant[] = Array.isArray(incomingData?.merchants) ? incomingData.merchants : [];
+  incMerchants.forEach((im) => {
+    if (!im || !im.name) return;
+    const exists = localMerchants.some((lm) => lm.id === im.id || lm.name.trim() === im.name.trim());
+    if (!exists) {
+      localMerchants.push(im);
+      stats.addedMerchants++;
+    }
+  });
+
+  // 7. Orders Merge
+  const localOrders: MerchantOrder[] = Array.isArray(localData?.orders) ? [...localData.orders] : [];
+  const incOrders: MerchantOrder[] = Array.isArray(incomingData?.orders) ? incomingData.orders : [];
+  incOrders.forEach((io) => {
+    if (!io) return;
+    const existsIndex = localOrders.findIndex((lo) => lo.id === io.id || (lo.orderNo && lo.orderNo === io.orderNo));
+    if (existsIndex === -1) {
+      localOrders.push(io);
+      stats.addedOrders++;
+    } else {
+      // If incoming order has a different status or date, sync it
+      if (io.status && io.status !== localOrders[existsIndex].status) {
+        localOrders[existsIndex] = { ...localOrders[existsIndex], ...io };
+      }
+    }
+  });
+
+  // 8. Categories Union
+  const localProdCats = getStoredProductCategories();
+  const incProdCats: string[] = Array.isArray(incomingData?.productCategories) ? incomingData.productCategories : [];
+  const mergedProdCats = Array.from(new Set([...localProdCats, ...incProdCats]));
+  saveStoredProductCategories(mergedProdCats);
+
+  const localRawCats = getStoredRawMaterialCategories();
+  const incRawCats: string[] = Array.isArray(incomingData?.rawMaterialCategories) ? incomingData.rawMaterialCategories : [];
+  const mergedRawCats = Array.from(new Set([...localRawCats, ...incRawCats]));
+  saveStoredRawMaterialCategories(mergedRawCats);
+
+  const mergedData = {
+    suppliers: localSuppliers,
+    merchants: localMerchants,
+    products: localProducts,
+    transactions: localTx,
+    sales: localSales,
+    merchantPurchases: localPurchases,
+    orders: localOrders,
+    peerTrades: localData?.peerTrades || [],
+    shopSettings: localData?.shopSettings || incomingData?.shopSettings || DEFAULT_SHOP_SETTINGS,
+    productCategories: mergedProdCats,
+    rawMaterialCategories: mergedRawCats,
+    mergedAt: new Date().toISOString(),
+  };
+
+  // Save merged state into localStorage
+  safeLocalStorageSet(STORAGE_KEYS.SUPPLIERS, localSuppliers);
+  safeLocalStorageSet(STORAGE_KEYS.MERCHANTS, localMerchants);
+  safeLocalStorageSet(STORAGE_KEYS.PRODUCTS, localProducts);
+  safeLocalStorageSet(STORAGE_KEYS.TRANSACTIONS, localTx);
+  safeLocalStorageSet(STORAGE_KEYS.SALES, localSales);
+  safeLocalStorageSet(STORAGE_KEYS.MERCHANT_PURCHASES, localPurchases);
+  safeLocalStorageSet(STORAGE_KEYS.MERCHANT_ORDERS, localOrders);
+
+  return {
+    success: true,
+    message: `ဒေတာများ အောင်မြင်စွာ ပေါင်းစည်းပြီးပါပြီ (ကုန်သိမ်း +${stats.addedTransactions}, အရောင်း +${stats.addedSales}, ကုန်သည် +${stats.addedMerchants}, ကုန်သွင်းသူ +${stats.addedSuppliers})`,
+    stats,
+    mergedData,
+  };
+}
+
 export function exportAllDataJSON(): void {
   try {
     const fullBackup = {
@@ -1618,8 +1988,12 @@ export function exportAllDataJSON(): void {
       products: getStoredProducts(),
       transactions: getStoredTransactions(),
       sales: getStoredSales(),
+      merchantPurchases: getStoredMerchantPurchases(),
       orders: getStoredMerchantOrders(),
       peerTrades: loadPeerTrades(),
+      productCategories: getStoredProductCategories(),
+      rawMaterialCategories: getStoredRawMaterialCategories(),
+      rawMaterials: getStoredRawMaterialPresets(),
       shopSettings: getStoredShopSettings(),
       appLockSettings: getStoredAppLockSettings(),
       exportedAt: new Date().toISOString(),

@@ -57,7 +57,10 @@ export const LocalSyncModal: React.FC<LocalSyncModalProps> = ({
         products: JSON.parse(localStorage.getItem('ledger_products_v1') || '[]'),
         transactions: JSON.parse(localStorage.getItem('ledger_transactions_v1') || '[]'),
         sales: JSON.parse(localStorage.getItem('ledger_sales_v1') || '[]'),
+        merchantPurchases: JSON.parse(localStorage.getItem('ledger_merchant_purchases_v1') || '[]'),
         orders: JSON.parse(localStorage.getItem('ledger_orders_v1') || '[]'),
+        productCategories: JSON.parse(localStorage.getItem('ledger_product_categories_v2') || '[]'),
+        rawMaterialCategories: JSON.parse(localStorage.getItem('ledger_raw_material_categories_v2') || '[]'),
         shopSettings: JSON.parse(localStorage.getItem('ledger_shop_settings_v1') || '{}'),
       };
     } catch {
